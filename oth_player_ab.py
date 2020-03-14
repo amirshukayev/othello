@@ -89,11 +89,15 @@ class OthelloPlayerAB:
         moves = self.board.GetLegalMoves()
 
         for m in moves:
+
             self.board.Play(m)
-            if Nega(self._ab()) == WIN:
-                return WIN
+            result = Nega(self._ab())
+
             self.board.Undo()
-        
+
+            if result == WIN:
+                return WIN
+
         return LOSS
             
 
