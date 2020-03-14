@@ -101,19 +101,21 @@ class OthBoard:
         """
         return n >= 0 and n < self.size
 
-    def IsLegal(self, move):
+    def GetCaptures(self, move):
         """
-        tells us if move is legal
+        returns all points captured by this move
         """
         our_color = self.CurrentPlayer()
 
         x, y = move
 
         if not self.InBounds(x) or not self.InBounds(y):
-            return False
+            return []
 
         if self.board[x][y] != EMPTY:
-            return False
+            return []
+
+        all_captures = []
 
         legal = False
         # check in all 8 directions (othello works diagonally)
@@ -122,22 +124,37 @@ class OthBoard:
             cx, cy = cx + dx, cy + dy
 
             seen_opp = False
+            tmp_captures = []
 
             # cx tracks where we are checking
             while self.InBounds(cx) and self.InBounds(cy):
 
                 if self.board[cx][cy] == opp(our_color):
+                    tmp_captures.append((cx, cy))
                     seen_opp = True
 
                 elif self.board[cx][cy] == EMPTY:
+                    # illegal line of captures
+                    tmp_captures = []
                     break
 
                 elif self.board[cx][cy] == our_color and seen_opp:
-                    return True
+                    # legal line of capture
+                    all_captures += tmp_captures
+                    tmp_captures = []
+                    break
 
                 cx += dx
                 cy += dy
 
+        return all_captures
+
+    def IsLegal(self, move):
+        """
+        tells us if move is legal
+        """
+        if self.GetCaptures(move):
+            return True
         return False
 
     def Play(self, p):
@@ -146,21 +163,29 @@ class OthBoard:
         """
         if isinstance(p, str):
             p = self.StrToPoint(p)
-
-        if self.IsLegal(p):
-            self.PlayNoCheck(p)
-            return True
-
-        else:
+        
+        captures = self.GetCaptures(p)
+        if not captures:
             return False
-
-    def PlayNoCheck(self, p):
-        """
-        play at point p without checking legality (only use if you confirm before)
-        """
+        
         self.board[p[0]][p[1]] = self.current_player
+        for x, y in captures:
+            self.board[x][y] = self.current_player
+
         self.current_player = opp(self.current_player)
-        self.move_history.append(p)
+        self.move_history.append((p, captures))
+
+    def Undo(self):
+        """
+        undo last move on the stack, and uncapture all captured pieces
+        set captured to current player
+        """
+        p, captures = self.move_history.pop()
+        x, y = p
+        self.board[x][y] = EMPTY
+        for x, y in captures:
+            self.board[x][y] = self.CurrentPlayer()
+        self.current_player = opp(self.current_player)
 
     def Place(self, point, color):
         """

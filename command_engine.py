@@ -17,7 +17,8 @@ class CommandEngine:
             "commands": self._commands_cmd,
             "moves": self._legal_moves_cmd,
             "play": self._play_cmd,
-            "showboard": self._show_board_cmd
+            "showboard": self._show_board_cmd,
+            "undo": self._undo_cmd
         }
 
     def run(self):
@@ -36,11 +37,14 @@ class CommandEngine:
             cmd, args = line[0], line[1:]
             self.commands[cmd](args)
 
+
     def _commands_cmd(self, args):
         print(' '.join(self.commands.keys()))
 
+
     def _legal_moves_cmd(self, args):
         print(' '.join(self.board.GetLegalMoves()))
+
 
     def _play_cmd(self, args):
         if not self.board.Play(args[0]):
@@ -48,3 +52,6 @@ class CommandEngine:
 
     def _show_board_cmd(self, args):
         print(self.board)
+
+    def _undo_cmd(self, args):
+        self.board.Undo()
