@@ -49,7 +49,7 @@ class OthBoard:
         """
         change size of board, and also reset it
         """
-        if not size % 2:
+        if size % 2:
             raise ValueError("size of Othello board must be even.")
         
         self.size = size
@@ -87,6 +87,8 @@ class OthBoard:
 
         for i, row in enumerate(cpboard):
             line = [str(i+1)]
+            if self.size > 9 and i < 9:
+                line[0] += ' '
             line += [SYMBOLS[x] for x in row]
             lines.append(' '.join(line))
 

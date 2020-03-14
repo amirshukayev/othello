@@ -21,7 +21,7 @@ class CommandEngine:
             "moves": self._legal_moves_cmd,
             "play": self._play_cmd,
             "reset": self._reset_cmd,
-            "set_size": self._play_cmd,
+            "set_size": self._set_size_cmd,
             "showboard": self._show_board_cmd,
             "solve": self._solve_cmd,
             "undo": self._undo_cmd
@@ -60,7 +60,7 @@ class CommandEngine:
     def _reset_cmd(self, args):
         self.board.Reset()
 
-    def _set_size(self, args):
+    def _set_size_cmd(self, args):
         size = int(args[0])
         self.board.ChangeSize(size)
 
