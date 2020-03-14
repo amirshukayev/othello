@@ -187,6 +187,7 @@ class OthBoard:
         play at point p 
         """
         if p.lower() == 'pass':
+            raise RuntimeError("passing during AB search, incorrect")
             self.current_player = opp(self.current_player)
             return True
 
@@ -228,6 +229,7 @@ class OthBoard:
 
         self.current_player = opp(self.current_player)
         if self.GetLegalMoves():
+            self.current_player = opp(self.current_player)
             return False
         
         self.current_player = opp(self.current_player)
