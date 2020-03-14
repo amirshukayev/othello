@@ -25,7 +25,9 @@ class CommandEngine:
             "time_limit": self._set_time_limit_cmd,
             "showboard": self._show_board_cmd,
             "solve": self._solve_cmd,
-            "undo": self._undo_cmd
+            "undo": self._undo_cmd,
+            "use_ordering": self._use_ordering_cmd,
+            "use_tt": self._use_tt_cmd
         }
 
     def run(self):
@@ -87,3 +89,19 @@ class CommandEngine:
 
     def _undo_cmd(self, args):
         self.board.Undo()
+
+    def _use_ordering_cmd(self, args):
+        if args[0].strip().lower() == "true":
+            self.engine.use_ordering = True
+        elif args[0].strip().lower() == "false":
+            self.engine.use_ordering = False
+        else:
+            print('use_ordering must be true or false')
+
+    def _use_tt_cmd(self, args):
+        if args[0].strip().lower() == "true":
+            self.engine.use_tt = True
+        elif args[0].strip().lower() == "false":
+            self.engine.use_tt = False
+        else:
+            print('use_tt must be true or false')

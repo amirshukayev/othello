@@ -126,6 +126,21 @@ class OthBoard:
         """
         return n >= 0 and n < self.size
 
+    def AllPointsBeside(self, p):
+        """
+        returns array of all points adjacent (including diagonally)
+        from point p
+        """
+        if isinstance(p, str):
+            p = self.StrToPoint(p)
+
+        x, y = p
+        points = []
+        for dx, dy in DIRS:
+            if self.InBounds(x+dx) and self.InBounds(y+dy):
+                points.append((x+dx, y+dy))
+        return points
+
     def GetCaptures(self, move):
         """
         returns all points captured by this move
@@ -256,6 +271,12 @@ class OthBoard:
         else:
             raise ValueError("TIE OCCURRED WITH KOMI")
             return EMPTY, score
+
+    def Hash(self):
+        """
+        return hash of the board's state (not including history)
+        """
+        return hash(str(self))
 
     def Place(self, point, color):
         """
