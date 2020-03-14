@@ -46,6 +46,8 @@ class OthBoard:
         self.move_history = []
         self.current_player = BLACK
 
+        self.komi = 0.5 # for simplification purposes for now
+
         m2 = size // 2
         m1 = m2 - 1
 
@@ -94,6 +96,12 @@ class OthBoard:
         player who moves next
         """
         return self.current_player
+
+    def CurrentPlayerStr(self):
+        """
+        string representation of current player (X, O)
+        """
+        return SYMBOLS[self.current_player]
 
     def InBounds(self, n):
         """
@@ -161,6 +169,10 @@ class OthBoard:
         """
         play at point p 
         """
+        if p.lower() == 'pass':
+            self.current_player = opp(self.current_player)
+            return True
+
         if isinstance(p, str):
             p = self.StrToPoint(p)
         
@@ -175,6 +187,8 @@ class OthBoard:
         self.current_player = opp(self.current_player)
         self.move_history.append((p, captures))
 
+        return True
+
     def Undo(self):
         """
         undo last move on the stack, and uncapture all captured pieces
@@ -186,6 +200,43 @@ class OthBoard:
         for x, y in captures:
             self.board[x][y] = self.CurrentPlayer()
         self.current_player = opp(self.current_player)
+
+    def Terminal(self):
+        """
+        return True if the game is over for the current state
+        False otherwise
+        """
+        if self.GetLegalMoves():
+            return False
+
+        self.current_player = opp(self.current_player)
+        if self.GetLegalMoves():
+            return False
+        
+        self.current_player = opp(self.current_player)
+        return True
+
+    def Winner(self):
+        """
+        return Winner, Score of the game
+        """
+        bcount = 0
+        wcount = 0
+        for i in range(self.size):
+            for j in range(self.size):
+                if self.board[i][j] == BLACK:
+                    bcount += 1
+                elif self.board[i][j] == WHITE:
+                    wcount += 1
+
+        score = bcount - wcount + self.komi # komi to make sure we don't tie for now
+        if score > 0:
+            return BLACK, score
+        elif score < 0:
+            return WHITE, score
+        else:
+            raise ValueError("TIE OCCURRED WITH KOMI")
+            return EMPTY, score
 
     def Place(self, point, color):
         """
