@@ -39,6 +39,10 @@ class OthelloPlayerAB:
         self.use_ordering = False
         self._ordering = {}
 
+        # killer heuristic
+        self.use_killer = False
+        self._killer = {}
+
     def SetTimeLimit(self, time_limit):
         """
         set time limit of the search in seconds
@@ -78,12 +82,32 @@ class OthelloPlayerAB:
                 # so the ordering doesn't care about the format of the move (messy)
                 self._ordering[self.board.PointToStr(p)] = 10
 
+    def CreateKiller(self):
+        """
+        maps moves to number of beta cuts it did
+        """
+        self._killer = {}
+
+    def UpdateKiller(self, m):
+        """
+        incrememnts number of beta cuts for a move
+        """
+        if m not in self._killer:
+            self._killer[m] = 0
+        self._killer[m] += 1
+
     def OrderMoves(self, moves):
         """
         orders moves based on the move ordering, lower is stronger and will
         be picked first
         """
         return sorted(moves, key=lambda x: self._ordering.get(x, 0.0))
+
+    def OrderKiller(self, moves):
+        """
+        orders moves based on the killer heuristic (better moves cause more beta cuts)
+        """
+        return sorted(moves, key=lambda x: self._killer.get(x, 0))
 
     def Solve(self):
         """
@@ -106,6 +130,11 @@ class OthelloPlayerAB:
             self.tt = {}
             self.tt_size = self.board.size
             self.CreateMoveOrdering()
+            self.CreateKiller()
+
+        if self.use_killer and self.use_ordering:
+            print("warning: if both use_killer and use_ordering are set, \
+                killer heuristic will not be used")
 
         result = self._ab()
 
@@ -193,7 +222,6 @@ class OthelloPlayerAB:
 
             if self.board.CurrentPlayer() == winner:
                 self.TTwrite(WIN)
-                self.beta_cuts += 1
                 return WIN
 
             self.TTwrite(LOSS)
@@ -207,6 +235,9 @@ class OthelloPlayerAB:
         if self.use_ordering:
             moves = self.OrderMoves(moves)
 
+        elif self.use_killer:
+            moves = self.OrderKiller(moves)
+
         for m in moves:
 
             if not self.board.Play(m):
@@ -217,8 +248,13 @@ class OthelloPlayerAB:
             self.board.Undo()
 
             if result == WIN:
+                self.beta_cuts += 1
                 if self.super_debug:
                     print("beta cut")
+
+                if self.use_killer:
+                    self.UpdateKiller(m)
+
                 self.TTwrite(WIN)
                 return WIN
 

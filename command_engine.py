@@ -26,6 +26,7 @@ class CommandEngine:
             "showboard": self._show_board_cmd,
             "solve": self._solve_cmd,
             "undo": self._undo_cmd,
+            "use_killer": self._use_killer_cmd,
             "use_ordering": self._use_ordering_cmd,
             "use_tt": self._use_tt_cmd
         }
@@ -89,6 +90,14 @@ class CommandEngine:
 
     def _undo_cmd(self, args):
         self.board.Undo()
+
+    def _use_killer_cmd(self, args):
+        if args[0].strip().lower() == "true":
+            self.engine.use_killer = True
+        elif args[0].strip().lower() == "false":
+            self.engine.use_killer = False
+        else:
+            print('use_killer must be true or false')
 
     def _use_ordering_cmd(self, args):
         if args[0].strip().lower() == "true":
