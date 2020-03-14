@@ -20,6 +20,8 @@ class CommandEngine:
             "commands": self._commands_cmd,
             "moves": self._legal_moves_cmd,
             "play": self._play_cmd,
+            "reset": self._reset_cmd,
+            "set_size": self._play_cmd,
             "showboard": self._show_board_cmd,
             "solve": self._solve_cmd,
             "undo": self._undo_cmd
@@ -54,6 +56,13 @@ class CommandEngine:
     def _play_cmd(self, args):
         if not self.board.Play(args[0]):
             print("Illegal Move")
+
+    def _reset_cmd(self, args):
+        self.board.Reset()
+
+    def _set_size(self, args):
+        size = int(args[0])
+        self.board.ChangeSize(size)
 
     def _show_board_cmd(self, args):
         print(self.board)

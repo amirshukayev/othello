@@ -42,13 +42,28 @@ class OthBoard:
         assert(not size % 2)
 
         self.size = size
+        self.komi = 0.5 # for simplification purposes for now
+        self.Reset()
+
+    def ChangeSize(self, size):
+        """
+        change size of board, and also reset it
+        """
+        if not size % 2:
+            raise ValueError("size of Othello board must be even.")
+        
+        self.size = size
+        self.Reset()
+
+    def Reset(self):
+        """
+        reset to empty board, beginning of game
+        """
         self.board = [[EMPTY] * self.size for _ in range(self.size)]
         self.move_history = []
         self.current_player = BLACK
 
-        self.komi = 0.5 # for simplification purposes for now
-
-        m2 = size // 2
+        m2 = self.size // 2
         m1 = m2 - 1
 
         self.Place((m1, m1), WHITE)
