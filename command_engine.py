@@ -40,6 +40,9 @@ class CommandEngine:
                 break
 
             line = line.strip().split()
+            if not line:
+                continue
+
             cmd, args = line[0], line[1:]
             self.commands[cmd](args)
 
