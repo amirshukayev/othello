@@ -36,11 +36,11 @@ class OthelloPlayerAB:
         self.tt_size = 100000 # make it this big for now
 
         # move ordering
-        self.use_ordering = False
+        self.use_ordering = True
         self._ordering = {}
 
         # killer heuristic
-        self.use_killer = False
+        self.use_killer = True
         self._killer = {}
 
     def SetTimeLimit(self, time_limit):
@@ -88,6 +88,18 @@ class OthelloPlayerAB:
         """
         self._killer = {}
 
+        # basically corners will already be assumed
+        # to have created a bunch of beta cuts
+        # so they are prefered (if move ordering on too)
+        ordering_init_multiplier = (self.board.size ** 2) // 2
+
+        if self.use_ordering:
+            if not self._ordering:
+                self.CreateMoveOrdering()
+            for key in self._ordering:
+                self._killer[key] = ordering_init_multiplier * self._ordering[key]
+            
+
     def UpdateKiller(self, m):
         """
         incrememnts number of beta cuts for a move
@@ -133,8 +145,7 @@ class OthelloPlayerAB:
             self.CreateKiller()
 
         if self.use_killer and self.use_ordering:
-            print("warning: if both use_killer and use_ordering are set, \
-                killer heuristic will not be used")
+            print("warning: if both use_killer and use_ordering are set, killer heuristic will not be used")
 
         result = self._ab()
 
@@ -232,7 +243,7 @@ class OthelloPlayerAB:
 
         moves = self.board.GetLegalMoves()
 
-        if self.use_ordering:
+        if self.use_ordering and not self.use_killer:
             moves = self.OrderMoves(moves)
 
         elif self.use_killer:
