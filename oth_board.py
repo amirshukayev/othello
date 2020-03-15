@@ -105,6 +105,12 @@ class OthBoard:
         lines.append("to play: {}".format(SYMBOLS[self.CurrentPlayer()]))
         return '\n'.join(lines)
 
+    def __hash__(self):
+        """
+        creates hash of the board quickly
+        """
+        return hash(''.join([SYMBOLS[x] for x in self.board]) + str(self.current_player))
+
     def PointToStr(self, move):
         """
         for example: (0, 0) -> "A1"
@@ -302,7 +308,7 @@ class OthBoard:
         """
         return hash of the board's state (not including history)
         """
-        return hash(str(self))
+        return hash(self)
 
     def Place(self, point, color):
         """
