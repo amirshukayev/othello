@@ -39,6 +39,7 @@ class OthBoard:
         max size of 10 for now
         """
         assert(size > 0 and size < 10)
+        # you should only be able to set odd size if you choose to
         assert(not size % 2)
 
         self.allow_odd_size_boards = True
@@ -60,7 +61,8 @@ class OthBoard:
         """
         reset to empty board, beginning of game
         """
-        self.board = [[EMPTY] * self.size for _ in range(self.size)]
+        n = self.size ** 2
+        self.board = [EMPTY] * n
         self.move_history = []
         self.current_player = BLACK
 
@@ -81,10 +83,17 @@ class OthBoard:
         4 . . . .
         to play: {BLACK, WHITE}
         """
+        size = self.size
+        tmp_board = [[EMPTY] * size for _ in range(size)]
+
+        for i in range(size):
+            for j in range(size):
+                tmp_board[i][j] = self.AccessBoard(i, j)
+
         lines = ['  ' + ' '.join(LETTERS[0:self.size])]
 
         # transpose the 2D array so it prints out correctly
-        cpboard = [*zip(*self.board)]
+        cpboard = [*zip(*tmp_board)]
 
         for i, row in enumerate(cpboard):
             line = [str(i+1)]
@@ -146,13 +155,17 @@ class OthBoard:
         """
         returns the color of the board at point x, y
         """
-        return self.board[x][y]
+        sz = self.size
+        idc = sz * x + y
+        return self.board[idc]
 
     def SetBoard(self, x, y, color):
         """
         sets the color of the board at point x, y
         """
-        self.board[x][y] = color
+        sz = self.size
+        idc = sz * x + y
+        self.board[idc] = color
 
     def GetCaptures(self, move):
         """

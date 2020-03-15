@@ -12,5 +12,5 @@ def main():
     cmd_engine.run()
 
 if "__main__" == __name__:
-    main()
-    # cProfile.run('main()')
+    # main()
+    cProfile.run('main()')
