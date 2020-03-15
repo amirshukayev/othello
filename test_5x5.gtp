@@ -1,0 +1,7 @@
+set_size 5
+showboard
+use_tt false
+use_killer true
+use_ordering false
+time_limit 600
+solve

@@ -41,6 +41,7 @@ class OthBoard:
         assert(size > 0 and size < 10)
         assert(not size % 2)
 
+        self.allow_odd_size_boards = True
         self.size = size
         self.komi = 0.5 # for simplification purposes for now
         self.Reset()
@@ -49,7 +50,7 @@ class OthBoard:
         """
         change size of board, and also reset it
         """
-        if size % 2:
+        if size % 2 and not self.allow_odd_size_boards:
             raise ValueError("size of Othello board must be even.")
         
         self.size = size
@@ -141,6 +142,18 @@ class OthBoard:
                 points.append((x+dx, y+dy))
         return points
 
+    def AccessBoard(self, x, y):
+        """
+        returns the color of the board at point x, y
+        """
+        return self.board[x][y]
+
+    def SetBoard(self, x, y, color):
+        """
+        sets the color of the board at point x, y
+        """
+        self.board[x][y] = color
+
     def GetCaptures(self, move):
         """
         returns all points captured by this move
@@ -152,7 +165,7 @@ class OthBoard:
         if not self.InBounds(x) or not self.InBounds(y):
             return []
 
-        if self.board[x][y] != EMPTY:
+        if self.AccessBoard(x, y) != EMPTY:
             return []
 
         all_captures = []
@@ -169,16 +182,16 @@ class OthBoard:
             # cx tracks where we are checking
             while self.InBounds(cx) and self.InBounds(cy):
 
-                if self.board[cx][cy] == opp(our_color):
+                if self.AccessBoard(cx, cy) == opp(our_color):
                     tmp_captures.append((cx, cy))
                     seen_opp = True
 
-                elif self.board[cx][cy] == EMPTY:
+                elif self.AccessBoard(cx, cy) == EMPTY:
                     # illegal line of captures
                     tmp_captures = []
                     break
 
-                elif self.board[cx][cy] == our_color and seen_opp:
+                elif self.AccessBoard(cx, cy) == our_color and seen_opp:
                     # legal line of capture
                     all_captures += tmp_captures
                     tmp_captures = []
@@ -213,9 +226,9 @@ class OthBoard:
         if not captures:
             return False
         
-        self.board[p[0]][p[1]] = self.current_player
+        self.SetBoard(p[0], p[1], self.current_player)
         for x, y in captures:
-            self.board[x][y] = self.current_player
+            self.SetBoard(x, y, self.current_player)
 
         self.current_player = opp(self.current_player)
         self.move_history.append((p, captures))
@@ -229,9 +242,9 @@ class OthBoard:
         """
         p, captures = self.move_history.pop()
         x, y = p
-        self.board[x][y] = EMPTY
+        self.SetBoard(x, y, EMPTY)
         for x, y in captures:
-            self.board[x][y] = self.CurrentPlayer()
+            self.SetBoard(x, y, self.CurrentPlayer())
         self.current_player = opp(self.current_player)
 
     def Terminal(self):
@@ -258,9 +271,9 @@ class OthBoard:
         wcount = 0
         for i in range(self.size):
             for j in range(self.size):
-                if self.board[i][j] == BLACK:
+                if self.AccessBoard(i, j) == BLACK:
                     bcount += 1
-                elif self.board[i][j] == WHITE:
+                elif self.AccessBoard(i, j) == WHITE:
                     wcount += 1
 
         score = bcount - wcount + self.komi # komi to make sure we don't tie for now
@@ -285,7 +298,7 @@ class OthBoard:
         """
         assert(color in [BLACK, WHITE, EMPTY])
         r, c = point
-        self.board[r][c] = color
+        self.SetBoard(r, c, color)
 
     def GetLegalMoves(self):
         moves = []
