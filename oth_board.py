@@ -29,7 +29,7 @@ def opp(color):
     elif color == WHITE:
         return BLACK
     else:
-        assert(FALSE)
+        assert(False)
 
 class OthBoard:
 
@@ -140,7 +140,7 @@ class OthBoard:
         """
         if index is within bounds of board (any dimension)
         """
-        return n >= 0 and n < self.size
+        return 0 <= n < self.size
 
     def AllPointsBeside(self, p):
         """
@@ -220,6 +220,16 @@ class OthBoard:
                 cy += dy
 
         return all_captures
+
+    def NumCaptured(self, move):
+        """
+        :param move: the move of a player
+        :return: returns an int of the number of pieces captured by a move
+        """
+        if isinstance(move, str):
+            move = self.StrToPoint(move)
+
+        return len(self.GetCaptures(move))
 
     def IsLegal(self, move):
         """
