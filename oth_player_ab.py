@@ -40,7 +40,7 @@ class OthelloPlayerAB:
         self._ordering = {}
 
         # killer heuristic
-        # TODO
+        # TODO SET TO FALSE
         self.use_killer = False
         self._killer = {}
 
@@ -74,14 +74,14 @@ class OthelloPlayerAB:
 
         # corners first
         for c in corners:
-            self._ordering[c] += -10
+            self._ordering[c] = -10
             # so the ordering doesn't care about the format of the move (messy)
             self._ordering[self.board.PointToStr(c)] += -10
 
         # points beside the corners are also weak
         for c in corners:
             for p in self.board.AllPointsBeside(c):
-                self._ordering[p] += 10
+                self._ordering[p] = 10
                 # so the ordering doesn't care about the format of the move (messy)
                 self._ordering[self.board.PointToStr(p)] += 10
 
@@ -123,19 +123,38 @@ class OthelloPlayerAB:
         """
         ordering_new = self._ordering.copy()
 
+        for move in moves:
+            #if isinstance(move, str):
+
+            ordering_new[move] += self.board.NumCaptured(move)/1.5
+
+                # print(move, self.board.NumCaptured(move))
+                # print(self.board)
+
+        sorted_moves = sorted(moves, key=lambda x: ordering_new.get(x, 0.0))
+
+        return sorted_moves
+
+        # return sorted(moves, key=lambda x: self._ordering.get(x, 0.0))
+
+
+    def OrderKiller(self, moves):
+        """
+        orders moves based on the killer heuristic (better moves cause more beta cuts)
+        """
+        '''
+        ordering_new = self._killer.copy()
+
         for move in ordering_new.keys():
-            ordering_new[move] += self.board.NumCaptured(move)
+            if isinstance(move, str):
+                ordering_new[move] += -self.board.NumCaptured(move)/4
 
         # return sorted(moves, key=lambda x: self._ordering.get(x, 0.0))
         sorted_moves = sorted(moves, key=lambda x: ordering_new.get(x, 0.0))
         ordering_new.clear()
 
         return sorted_moves
-
-    def OrderKiller(self, moves):
-        """
-        orders moves based on the killer heuristic (better moves cause more beta cuts)
-        """
+        '''
         return sorted(moves, key=lambda x: self._killer.get(x, 0))
 
     def Solve(self):
@@ -262,8 +281,6 @@ class OthelloPlayerAB:
         moves = self.board.GetLegalMoves()
 
         if self.use_ordering and not self.use_killer:
-            # self.CreateCaptureOrdering(moves)
-
             moves = self.OrderMoves(moves)
 
         elif self.use_killer:
