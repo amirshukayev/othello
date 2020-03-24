@@ -52,7 +52,7 @@ class OthelloPlayerAB:
     def GetStats(self):
         return {
             'searches': self.searches,
-            'searches_per_second': round(self.searches / self.time_limit, 4),
+            'searches_per_second': round(self.searches / self.time_taken, 4),
             'terminals': self.terminals,
             'beta_cuts': self.beta_cuts,
             'tt_hits': self.tt_hits,
@@ -134,6 +134,7 @@ class OthelloPlayerAB:
         self.tt_hits = 0
         self.tt_misses = 0
         self.tt_gcs = 0
+        self.time_taken = 0
 
         # if the size of the current board search is different than
         # previous, we need to reset the transpotition table
@@ -148,6 +149,8 @@ class OthelloPlayerAB:
             print("warning: if both use_killer and use_ordering are set, killer heuristic will not be used")
 
         result = self._ab()
+
+        self.time_taken = time() - self.start
 
         if self.Abort():
             return ABORTED, -1
