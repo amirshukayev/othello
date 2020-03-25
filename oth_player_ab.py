@@ -41,7 +41,7 @@ class OthelloPlayerAB:
 
         # killer heuristic
         # TODO SET TO FALSE
-        self.use_killer = False
+        self.use_killer = True
         self._killer = {}
 
     def SetTimeLimit(self, time_limit):
@@ -124,12 +124,7 @@ class OthelloPlayerAB:
         ordering_new = self._ordering.copy()
 
         for move in moves:
-            #if isinstance(move, str):
-
             ordering_new[move] += self.board.NumCaptured(move)/1.5
-
-                # print(move, self.board.NumCaptured(move))
-                # print(self.board)
 
         sorted_moves = sorted(moves, key=lambda x: ordering_new.get(x, 0.0))
 
@@ -142,19 +137,6 @@ class OthelloPlayerAB:
         """
         orders moves based on the killer heuristic (better moves cause more beta cuts)
         """
-        '''
-        ordering_new = self._killer.copy()
-
-        for move in ordering_new.keys():
-            if isinstance(move, str):
-                ordering_new[move] += -self.board.NumCaptured(move)/4
-
-        # return sorted(moves, key=lambda x: self._ordering.get(x, 0.0))
-        sorted_moves = sorted(moves, key=lambda x: ordering_new.get(x, 0.0))
-        ordering_new.clear()
-
-        return sorted_moves
-        '''
         return sorted(moves, key=lambda x: self._killer.get(x, 0))
 
     def Solve(self):
