@@ -41,7 +41,7 @@ class OthelloPlayerAB:
 
         # killer heuristic
         # TODO SET TO FALSE
-        self.use_killer = True
+        self.use_killer = False
         self._killer = {}
 
     def SetTimeLimit(self, time_limit):

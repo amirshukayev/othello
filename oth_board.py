@@ -231,6 +231,35 @@ class OthBoard:
 
         return len(self.GetCaptures(move))
 
+    def EvaluateState(self, move):
+        """
+        :param move: The move taken by the agent (needs to be (x, y) tuple form)
+        :return: retuns a tuple of two floats based on the desirability of the current state and move
+        """
+        # All legal moves from the state
+        legal_moves = self.GetLegalMoves()
+
+        # Start the original action value with the negative number of disc captures
+        move_score = float(-self.NumCaptured(move))
+
+        # Measure mobility (how many moves the player can make, the more the better)
+        state_score = -float(len(legal_moves))
+
+        # Check if move creates corner state --> better (checked at all times)
+        limit = self.board.size - 1
+        corners = [(0, 0), (0, limit), (limit, 0), (limit, limit)]
+
+        # Check if the current move is a corner play, or if the current state can allow for a corner play
+        # Update both values
+        for corner in corners:
+            if move == corner:
+                move_score += -2.0
+            if corner in legal_moves:
+                state_score += -2.0
+
+        # Check stability (stones that cannot be flipped) VERY IMPORTANT
+        return (state_score, move_score)
+
     def IsLegal(self, move):
         """
         tells us if move is legal
