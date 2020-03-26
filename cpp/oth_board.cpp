@@ -11,6 +11,7 @@ includes logic for legal moves, and ability to undo moves
 
 OthBoard::OthBoard(int size)
 {   
+    std::cout << "creating board" << std::endl;
     // make sure its not too big
     assert(size > 0 && size < 10);
 
@@ -22,7 +23,9 @@ OthBoard::OthBoard(int size)
 }
 
 OthBoard::~OthBoard()
-{ }
+{ 
+    std::cout << "destroyed" << std::endl;
+}
 
 void OthBoard::InitDirs()
 {
@@ -64,7 +67,7 @@ std::string ColorToString(othColor c)
         return std::string("X");
     
     else if (c == EMPTY)
-        return std::string(" ");
+        return std::string(".");
 
     return std::string();
 }
@@ -179,7 +182,10 @@ othPointList OthBoard::GetCaptures(othPoint pt) const
         return othPointList();
     }
 
-    othPointList all_captures = othPointList();
+    othPointList all_captures;
+    othPointList tmp_captures;
+
+    all_captures.clear();
 
     bool legal_flag = false;
     // check in all 8 directions (othello works diagonally too)
@@ -189,11 +195,14 @@ othPointList OthBoard::GetCaptures(othPoint pt) const
         int cx = x+dx, cy = y+dy;
 
         bool seen_opp = false;
-        othPointList tmp_captures = othPointList();
+        tmp_captures.clear();
 
-        othPoint cpt = p(cx, cy);
-        while (InBounds(cpt))
+        while (true)
         {
+            othPoint cpt = std::make_pair(cx, cy);
+            if (!InBounds(cpt))
+                break;
+
             if (AccessBoard(cpt) == opp(our_color))
             {
                 tmp_captures.push_back(cpt);
@@ -217,7 +226,6 @@ othPointList OthBoard::GetCaptures(othPoint pt) const
 
             cx += dx;
             cy += dy;
-            cpt = p(cx, cy);
         }
     }
     return all_captures;
@@ -270,11 +278,11 @@ void OthBoard::Undo()
 
 bool OthBoard::Terminal()
 {
-    if (GetLegalMoves().empty())
+    if (!GetLegalMoves().empty())
         return false;
 
     m_currentPlayer = opp(m_currentPlayer);
-    if (GetLegalMoves().empty())
+    if (!GetLegalMoves().empty())
     {
         m_currentPlayer = opp(m_currentPlayer);
         return false;
@@ -348,4 +356,9 @@ othPointList OthBoard::GetLegalMoves()
         }
     }
     return moves;
+}
+
+othHistory OthBoard::GetHistory()
+{
+    return m_history;
 }

@@ -6,11 +6,13 @@ parses commands and executes them on a given board
 #include <sstream>
 
 #include "command_engine.h"
+#include "oth_player_ab.h"
 
 using namespace std;
 
-CommandEngine::CommandEngine(OthBoard& board) 
-    : m_board(board)
+CommandEngine::CommandEngine(OthBoard* board, OthelloPlayerAb& player) 
+    : m_board(board),
+      m_player(player)
 { }
 
 CommandEngine::~CommandEngine()
@@ -101,7 +103,7 @@ void CommandEngine::_commands_cmd(arguments args)
 
 void CommandEngine::_legal_moves_cmd(arguments args)
 {
-    auto legal_moves = m_board.GetLegalMoves();
+    auto legal_moves = m_board->GetLegalMoves();
     if (legal_moves.empty())
     {
         cout << "pass" << endl;
@@ -110,7 +112,7 @@ void CommandEngine::_legal_moves_cmd(arguments args)
     {
         for (auto const& m : legal_moves)
         {
-            cout << m_board.PointToString(m) << " ";
+            cout << m_board->PointToString(m) << " ";
         }
         cout << endl;
     }
@@ -118,19 +120,19 @@ void CommandEngine::_legal_moves_cmd(arguments args)
 
 void CommandEngine::_play_cmd(arguments args)
 {
-    if (!m_board.Play(m_board.StrToPoint(args[0])))
+    if (!m_board->Play(m_board->StrToPoint(args[0])))
     {
         cout << "Illegal Move" << endl;
     }
 }
 void CommandEngine::_reset_cmd(arguments args)
 {
-    m_board.Reset();
+    m_board->Reset();
 }
 
 void CommandEngine::_set_size_cmd(arguments args)
 {
-    m_board.ChangeSize(stoi(args[0]));
+    m_board->ChangeSize(stoi(args[0]));
 }
 
 void CommandEngine::_set_time_limit_cmd(arguments args)
@@ -139,17 +141,38 @@ void CommandEngine::_set_time_limit_cmd(arguments args)
 
 void CommandEngine::_show_board_cmd(arguments args)
 {
-    std::cout << m_board.Str() << std::endl;
+    std::cout << m_board->Str() << std::endl;
 }
 
 void CommandEngine::_solve_cmd(arguments args)
 {
+    auto results = m_player.Solve();
+    double timeTaken = results.second;
+    othColor res = results.first;
+    
+    if (res == AB_ABORTED)
+    {
+        cout << "SEARCH ABORTED" << endl;
+        return;
+    }
 
+    for (auto const& item : m_player.GetStats())
+    {
+        cout << item.first << ": " << item.second << endl;
+    }
+
+    cout << "winner is ";
+    if (res == BLACK)
+        cout << "X" << endl;
+    else if (res == WHITE)
+        cout << "O" << endl;
+    else
+        cout << res << endl;
 }
 
 void CommandEngine::_undo_cmd(arguments args)
 {
-    m_board.Undo();
+    m_board->Undo();
 }
 
 void CommandEngine::_use_killer_cmd(arguments args)

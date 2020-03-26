@@ -6,6 +6,7 @@ parses commands and executes them on a given board
 #define COMMAND_ENGINE_H
 
 #include "oth_board.h"
+#include "oth_player_ab.h"
 
 #include <vector>
 #include <string>
@@ -23,7 +24,7 @@ typedef std::unordered_map<std::string, CmdFunc> CmdMap;
 class CommandEngine
 {
 public:
-    CommandEngine(OthBoard& board);
+    CommandEngine(OthBoard* board, OthelloPlayerAb& player);
     ~CommandEngine();
 
     void Run();
@@ -45,7 +46,8 @@ private:
     void _use_tt_cmd(arguments args);
 
 private:
-    OthBoard m_board;
+    OthBoard* m_board;
+    OthelloPlayerAb& m_player;
 };
 
 #endif

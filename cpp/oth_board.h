@@ -11,6 +11,8 @@ includes logic for legal moves, and ability to undo moves
 #include <string>
 #include <vector>
 
+#define dp__ printf("LINE #%d FILE: %s\n", _LINE_, _FILE_);
+
 typedef int othColor;
 typedef std::pair<int,int> othPoint;
 typedef std::vector<othPoint> othPointList;
@@ -55,6 +57,7 @@ public:
     void ChangeSize(int size);
     void Reset();
     std::string Str();
+    int Size();
 
     uint64_t Hash() const;
     std::string PointToString(othPoint move) const;
@@ -78,6 +81,7 @@ public:
 
     void Place(othPoint p, othColor c);
     othPointList GetLegalMoves();
+    othHistory GetHistory();
 
 private:
     bool InBounds(othPoint p) const;
@@ -95,5 +99,10 @@ private:
 
     othPointList m_dirs;
 };
+
+inline int OthBoard::Size()
+{
+    return m_size;
+}
 
 #endif
