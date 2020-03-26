@@ -40,7 +40,8 @@ class OthelloPlayerAB:
         self._ordering = {}
 
         # killer heuristic
-        self.use_killer = True
+        # TODO SET TO FALSE
+        self.use_killer = False
         self._killer = {}
 
     def SetTimeLimit(self, time_limit):
@@ -65,22 +66,30 @@ class OthelloPlayerAB:
         creates dictionary of move -> weight
         lower weights are better, and moves with lower weights will be picked first
         """
-        self._ordering = defaultdict(float)
+        print("move ordering used")
 
-        # corners first
+        self._ordering = defaultdict(float)
         limit = self.board.size - 1
         corners = [(0, 0), (0, limit), (limit, 0), (limit, limit)]
+
+        # corners first
         for c in corners:
             self._ordering[c] = -10
             # so the ordering doesn't care about the format of the move (messy)
-            self._ordering[self.board.PointToStr(c)] = -10
+            self._ordering[self.board.PointToStr(c)] += -10
 
         # points beside the corners are also weak
         for c in corners:
             for p in self.board.AllPointsBeside(c):
                 self._ordering[p] = 10
                 # so the ordering doesn't care about the format of the move (messy)
-                self._ordering[self.board.PointToStr(p)] = 10
+                self._ordering[self.board.PointToStr(p)] += 10
+
+    def CreateCaptureOrdering(self, moves=[]):
+        # For each move, the fewer captures, the better
+        # Need to reupdate the dictionary after each episode though
+        for move in moves:
+            self._ordering[move] += -self.board.NumCaptured(move)
 
     def CreateKiller(self):
         """
@@ -98,7 +107,6 @@ class OthelloPlayerAB:
                 self.CreateMoveOrdering()
             for key in self._ordering:
                 self._killer[key] = ordering_init_multiplier * self._ordering[key]
-            
 
     def UpdateKiller(self, m):
         """
@@ -113,7 +121,17 @@ class OthelloPlayerAB:
         orders moves based on the move ordering, lower is stronger and will
         be picked first
         """
-        return sorted(moves, key=lambda x: self._ordering.get(x, 0.0))
+        ordering_new = self._ordering.copy()
+
+        for move in moves:
+            ordering_new[move] += self.board.NumCaptured(move)/1.5
+
+        sorted_moves = sorted(moves, key=lambda x: ordering_new.get(x, 0.0))
+
+        return sorted_moves
+
+        # return sorted(moves, key=lambda x: self._ordering.get(x, 0.0))
+
 
     def OrderKiller(self, moves):
         """
@@ -244,6 +262,7 @@ class OthelloPlayerAB:
         if self.super_debug:
             print(self.board)
 
+        # Get moves and then order them
         moves = self.board.GetLegalMoves()
 
         if self.use_ordering and not self.use_killer:
@@ -252,6 +271,9 @@ class OthelloPlayerAB:
         elif self.use_killer:
             moves = self.OrderKiller(moves)
 
+        # Order the moves based on the number of captures created, the fewer the better usually
+
+        # Play the moves in order
         for m in moves:
 
             if not self.board.Play(m):
