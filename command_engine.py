@@ -82,8 +82,10 @@ class CommandEngine:
         result, _time = self.engine.Solve()
         if result[0] == WIN:
             print('{} wins. Search took {}s'.format(self.board.CurrentPlayerStr(), _time))
+            print(result[1])
         elif result[0] == LOSS:
             print('{} loses. Search took {}s'.format(self.board.CurrentPlayerStr(), _time))
+            print(result[1])
         elif result[0] == ABORTED:
             print('search aborted after {} seconds'.format(self.engine.time_limit))
         print(self.engine.GetStats())

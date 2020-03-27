@@ -28,6 +28,7 @@ class OthelloPlayerAB:
 
         self.searches = 0
         self.terminals = 0
+        self.state_values = []
 
         # transposition table
         self.use_tt = False
@@ -174,7 +175,8 @@ class OthelloPlayerAB:
             print("warning: if both use_killer and use_ordering are set, killer heuristic will not be used")
 
         # result = self._ab()
-        result = self.negamaxBoolean(0)
+        result = self.negamaxBoolean(0, 0, 0)
+        print(self.state_values)
 
         self.time_taken = time() - self.start
 
@@ -303,22 +305,23 @@ class OthelloPlayerAB:
         self.TTwrite(LOSS)
         return LOSS
 
-    def negamaxBoolean(self, depth):
+    def negamaxBoolean(self, depth, state_val, move):
         """
         :param depth: the depth you want the search to go up to, an integer
         :return: returns [x, y]. Where x is the status so far (w,l,d) and y is a score of the state value
         """
         self.searches += 1
+        state_val += float(self.board.EvaluateState())
 
         if len(self.board.move_history) > self.board.size ** 2 - 4:
             raise RuntimeError("move history too long")
 
         if self.Abort():
-            return [LOSS, 0]
+            return [LOSS, state_val]
 
         tt_res = self.TTread()
         if tt_res is not None:
-            return [tt_res, 0]
+            return [tt_res, state_val]
 
         if self.board.Terminal():
 
@@ -328,21 +331,22 @@ class OthelloPlayerAB:
             if winner == EMPTY:
                 raise RuntimeError("can't handle DRAWS yet")
                 self.TTwrite(DRAW)
-                return [DRAW, 0]
+                return [DRAW, state_val]
 
             if self.board.CurrentPlayer() == winner:
                 self.TTwrite(WIN)
-                return [WIN, 0]
+                return [WIN, state_val]
 
             self.TTwrite(LOSS)
-            return [LOSS, 0]
+            return [LOSS, state_val]
 
         if self.super_debug:
             print(self.board)
 
         # Depth limit
-        if depth == 15:
-            return ["Unknown", self.board.EvaluateState()]
+        if depth == 5:
+            self.state_values.append([move, state_val])
+            return ["Unknown", state_val]
 
         # Get moves and then order them
         moves = self.board.GetLegalMoves()
@@ -358,7 +362,7 @@ class OthelloPlayerAB:
             if not self.board.Play(m):
                 raise RuntimeError("illegal move played")
 
-            result = Nega(self.negamaxBoolean(depth+1))
+            result = Nega(self.negamaxBoolean(depth+1, state_val, m))
             self.board.Undo()
 
             if result[0] == WIN:
@@ -370,11 +374,12 @@ class OthelloPlayerAB:
                     self.UpdateKiller(m)
 
                 self.TTwrite(WIN)
-                return [WIN, 0]
+                return [WIN, state_val]
 
         self.TTwrite(LOSS)
-        return [LOSS, 0]
+        return [LOSS, state_val]
 
+    # Minimax algorithm for when we can't find a winner or loser
     def minimax(self, curDepth, nodeIndex, maxTurn, scores, targetDepth):
 
         # base case : targetDepth reached
@@ -395,8 +400,8 @@ def Nega(result):
     do the Nega part of negamax alpha beta
     """
     if result[0] == WIN:
-        return [LOSS, result[1]]
+        return [LOSS, -result[1]]
     elif result[0] == LOSS:
-        return [WIN, result[1]]
+        return [WIN, -result[1]]
     else:
-        return result
+        return [result[0], -result[1]]
