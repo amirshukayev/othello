@@ -231,34 +231,55 @@ class OthBoard:
 
         return len(self.GetCaptures(move))
 
-    def EvaluateState(self, move):
+    def EvaluateMove(self, move):
         """
         :param move: The move taken by the agent (needs to be (x, y) tuple form)
         :return: retuns a tuple of two floats based on the desirability of the current state and move
         """
-        # All legal moves from the state
+        move = self.StrToPoint(move)
+
+        self.Play(move)
         legal_moves = self.GetLegalMoves()
+        player_count = 0
+        opponent_count = 0
+        for i in range(self.size):
+            for j in range(self.size):
+                if self.AccessBoard(i, j) == self.current_player:
+                    player_count += 1
+                elif self.AccessBoard(i, j) != 0:
+                    opponent_count += 1
+        self.Undo()
+
+        # Get the difference in the total discs captured.
+        captured = self.NumCaptured(move)
+        difference = (player_count + captured * 2 + 1 - opponent_count) * len(self.move_history)
 
         # Start the original action value with the negative number of disc captures
-        move_score = float(-self.NumCaptured(move))
+        move_score = float(captured) + difference
 
-        # Measure mobility (how many moves the player can make, the more the better)
-        state_score = -float(len(legal_moves))
+        # Move Score update on Mobility
+        if len(self.move_history) != 0:
+            move_score += len(legal_moves)/len(self.move_history)
 
         # Check if move creates corner state --> better (checked at all times)
-        limit = self.board.size - 1
+        limit = self.size - 1
         corners = [(0, 0), (0, limit), (limit, 0), (limit, limit)]
 
         # Check if the current move is a corner play, or if the current state can allow for a corner play
         # Update both values
         for corner in corners:
             if move == corner:
-                move_score += -2.0
-            if corner in legal_moves:
-                state_score += -2.0
+                move_score += -30.0
 
         # Check stability (stones that cannot be flipped) VERY IMPORTANT
-        return (state_score, move_score)
+
+        return -move_score
+
+    # Evaulate the goodness of a state for depth limited AB
+    def EvaluateState(self):
+
+        legalMovesNum = len(self.GetLegalMoves())
+        pass
 
     def IsLegal(self, move):
         """
@@ -272,12 +293,12 @@ class OthBoard:
         """
         play at point p 
         """
-        if p.lower() == 'pass':
-            raise RuntimeError("passing during AB search, incorrect")
-            self.current_player = opp(self.current_player)
-            return True
 
         if isinstance(p, str):
+            if p.lower() == 'pass':
+                raise RuntimeError("passing during AB search, incorrect")
+                self.current_player = opp(self.current_player)
+                return True
             p = self.StrToPoint(p)
         
         captures = self.GetCaptures(p)

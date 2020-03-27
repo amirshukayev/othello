@@ -271,8 +271,6 @@ class OthelloPlayerAB:
         elif self.use_killer:
             moves = self.OrderKiller(moves)
 
-        # Order the moves based on the number of captures created, the fewer the better usually
-
         # Play the moves in order
         for m in moves:
 
@@ -296,7 +294,41 @@ class OthelloPlayerAB:
 
         self.TTwrite(LOSS)
         return LOSS
-            
+
+    def negamaxBoolean(self, state, depth):
+        game_end, winner = state.check_game_end_gomoku()
+        #print(game_end,winner,self.ruiqinlegalmoves())
+        if game_end or depth == 5:
+            # print(game_end, winner)
+            #print("current depth "+ str(depth))
+            return state.staticallyEvaluateForToPlay()
+
+        if len(self.ruiqinlegalmoves()) == 0:
+            #print("do we have winner " + str(winner))
+            self.doWehaveWinner = winner
+            # print(self.doWehaveWinner)
+
+        colorToPlay = "b" if self.board.current_player == BLACK else "w"
+        legalmoves = self.ruiqinlegalmoves()
+
+        for m in legalmoves:
+            args = [colorToPlay.upper(), m]
+            #print(args)
+            self.ruiqinSimplePlay(args)
+            success = not self.negamaxBoolean(state, depth+1)
+            state.undoMove()
+            if success:
+                # This means there is a win
+                if self.solvingforColour == colorToPlay:
+                    self.winning_move.append((m, colorToPlay, self.doWehaveWinner))
+                # This indicates a draw
+                if self.solvingforColour != colorToPlay and self.doWehaveWinner is not None:
+                    self.winning_move.append((m, colorToPlay, self.doWehaveWinner))
+                #else:
+                    # self.winning_move.append((m, colorToPlay, self.doWehaveWinner))
+                return True
+
+        return False
 
 def Nega(result):
     """
