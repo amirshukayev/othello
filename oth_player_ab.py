@@ -304,17 +304,21 @@ class OthelloPlayerAB:
         return LOSS
 
     def negamaxBoolean(self, depth):
+        """
+        :param depth: the depth you want the search to go up to, an integer
+        :return: returns [x, y]. Where x is the status so far (w,l,d) and y is a score of the state value
+        """
         self.searches += 1
 
         if len(self.board.move_history) > self.board.size ** 2 - 4:
             raise RuntimeError("move history too long")
 
         if self.Abort():
-            return LOSS
+            return [LOSS, 0]
 
         tt_res = self.TTread()
         if tt_res is not None:
-            return tt_res
+            return [tt_res, 0]
 
         if self.board.Terminal():
 
@@ -324,21 +328,21 @@ class OthelloPlayerAB:
             if winner == EMPTY:
                 raise RuntimeError("can't handle DRAWS yet")
                 self.TTwrite(DRAW)
-                return DRAW
+                return [DRAW, 0]
 
             if self.board.CurrentPlayer() == winner:
                 self.TTwrite(WIN)
-                return WIN
+                return [WIN, 0]
 
             self.TTwrite(LOSS)
-            return LOSS
+            return [LOSS, 0]
 
         if self.super_debug:
             print(self.board)
 
         # Depth limit
         if depth == 15:
-            return self.board.EvaluateState()
+            return ["Unknown", self.board.EvaluateState()]
 
         # Get moves and then order them
         moves = self.board.GetLegalMoves()
@@ -357,7 +361,7 @@ class OthelloPlayerAB:
             result = Nega(self.negamaxBoolean(depth+1))
             self.board.Undo()
 
-            if result == WIN:
+            if result[0] == WIN:
                 self.beta_cuts += 1
                 if self.super_debug:
                     print("beta cut")
@@ -366,19 +370,33 @@ class OthelloPlayerAB:
                     self.UpdateKiller(m)
 
                 self.TTwrite(WIN)
-                return WIN
+                return [WIN, 0]
 
         self.TTwrite(LOSS)
-        return LOSS
+        return [LOSS, 0]
+
+    def minimax(self, curDepth, nodeIndex, maxTurn, scores, targetDepth):
+
+        # base case : targetDepth reached
+        if (curDepth == targetDepth):
+            return scores[nodeIndex]
+
+        if maxTurn:
+            return max(self.minimax(curDepth + 1, nodeIndex * 2, False, scores, targetDepth),
+                       self.minimax(curDepth + 1, nodeIndex * 2 + 1, False, scores, targetDepth))
+
+        else:
+            return min(self.minimax(curDepth + 1, nodeIndex * 2, True, scores, targetDepth),
+                       self.minimax(curDepth + 1, nodeIndex * 2 + 1, True, scores, targetDepth))
 
 
 def Nega(result):
     """
     do the Nega part of negamax alpha beta
     """
-    if result == WIN:
-        return LOSS
-    elif result == LOSS:
-        return WIN
+    if result[0] == WIN:
+        return [LOSS, result[1]]
+    elif result[0] == LOSS:
+        return [WIN, result[1]]
     else:
         return result
