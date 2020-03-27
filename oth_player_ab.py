@@ -132,6 +132,13 @@ class OthelloPlayerAB:
 
         # return sorted(moves, key=lambda x: self._ordering.get(x, 0.0))
 
+    def OrderMovesNega(self, moves):
+        ordering = {}
+        for m in moves:
+            ordering[m] = self.board.EvaluateMove(m)
+
+        sorted_moves = sorted(moves, key=lambda x: ordering.get(x, 0.0))
+        return sorted_moves
 
     def OrderKiller(self, moves):
         """
@@ -166,7 +173,8 @@ class OthelloPlayerAB:
         if self.use_killer and self.use_ordering:
             print("warning: if both use_killer and use_ordering are set, killer heuristic will not be used")
 
-        result = self._ab()
+        # result = self._ab()
+        result = self.negamaxBoolean(0)
 
         self.time_taken = time() - self.start
 
@@ -295,40 +303,74 @@ class OthelloPlayerAB:
         self.TTwrite(LOSS)
         return LOSS
 
-    def negamaxBoolean(self, state, depth):
-        game_end, winner = state.check_game_end_gomoku()
-        #print(game_end,winner,self.ruiqinlegalmoves())
-        if game_end or depth == 5:
-            # print(game_end, winner)
-            #print("current depth "+ str(depth))
-            return state.staticallyEvaluateForToPlay()
+    def negamaxBoolean(self, depth):
+        self.searches += 1
 
-        if len(self.ruiqinlegalmoves()) == 0:
-            #print("do we have winner " + str(winner))
-            self.doWehaveWinner = winner
-            # print(self.doWehaveWinner)
+        if len(self.board.move_history) > self.board.size ** 2 - 4:
+            raise RuntimeError("move history too long")
 
-        colorToPlay = "b" if self.board.current_player == BLACK else "w"
-        legalmoves = self.ruiqinlegalmoves()
+        if self.Abort():
+            return LOSS
 
-        for m in legalmoves:
-            args = [colorToPlay.upper(), m]
-            #print(args)
-            self.ruiqinSimplePlay(args)
-            success = not self.negamaxBoolean(state, depth+1)
-            state.undoMove()
-            if success:
-                # This means there is a win
-                if self.solvingforColour == colorToPlay:
-                    self.winning_move.append((m, colorToPlay, self.doWehaveWinner))
-                # This indicates a draw
-                if self.solvingforColour != colorToPlay and self.doWehaveWinner is not None:
-                    self.winning_move.append((m, colorToPlay, self.doWehaveWinner))
-                #else:
-                    # self.winning_move.append((m, colorToPlay, self.doWehaveWinner))
-                return True
+        tt_res = self.TTread()
+        if tt_res is not None:
+            return tt_res
 
-        return False
+        if self.board.Terminal():
+
+            self.terminals += 1
+            winner, _ = self.board.Winner()
+
+            if winner == EMPTY:
+                raise RuntimeError("can't handle DRAWS yet")
+                self.TTwrite(DRAW)
+                return DRAW
+
+            if self.board.CurrentPlayer() == winner:
+                self.TTwrite(WIN)
+                return WIN
+
+            self.TTwrite(LOSS)
+            return LOSS
+
+        if self.super_debug:
+            print(self.board)
+
+        # Depth limit
+        if depth == 15:
+            return self.board.EvaluateState()
+
+        # Get moves and then order them
+        moves = self.board.GetLegalMoves()
+
+        if self.use_ordering and not self.use_killer:
+            moves = self.OrderMovesNega(moves)
+
+        elif self.use_killer:
+            moves = self.OrderKiller(moves)
+
+        for m in moves:
+
+            if not self.board.Play(m):
+                raise RuntimeError("illegal move played")
+
+            result = Nega(self.negamaxBoolean(depth+1))
+            self.board.Undo()
+
+            if result == WIN:
+                self.beta_cuts += 1
+                if self.super_debug:
+                    print("beta cut")
+
+                if self.use_killer:
+                    self.UpdateKiller(m)
+
+                self.TTwrite(WIN)
+                return WIN
+
+        self.TTwrite(LOSS)
+        return LOSS
+
 
 def Nega(result):
     """

@@ -242,24 +242,26 @@ class OthBoard:
         legal_moves = self.GetLegalMoves()
         player_count = 0
         opponent_count = 0
+        move_score = 0.0
         for i in range(self.size):
             for j in range(self.size):
                 if self.AccessBoard(i, j) == self.current_player:
                     player_count += 1
                 elif self.AccessBoard(i, j) != 0:
                     opponent_count += 1
-        self.Undo()
-
-        # Get the difference in the total discs captured.
-        captured = self.NumCaptured(move)
-        difference = (player_count + captured * 2 + 1 - opponent_count) * len(self.move_history)
-
-        # Start the original action value with the negative number of disc captures
-        move_score = float(captured) + difference
 
         # Move Score update on Mobility
         if len(self.move_history) != 0:
-            move_score += len(legal_moves)/len(self.move_history)
+            move_score += len(legal_moves) / len(self.move_history)
+
+        self.Undo()
+
+        # Get the difference in the total discs captured.
+        captured = self.NumCaptured(move) * len(self.move_history)
+        difference = (player_count + captured * 2 + 1 - opponent_count) * len(self.move_history)
+
+        # Start the original action value with the negative number of disc captures
+        move_score += float(captured) + difference
 
         # Check if move creates corner state --> better (checked at all times)
         limit = self.size - 1
@@ -269,17 +271,30 @@ class OthBoard:
         # Update both values
         for corner in corners:
             if move == corner:
-                move_score += -30.0
+                move_score += -300.0
 
         # Check stability (stones that cannot be flipped) VERY IMPORTANT
 
-        return -move_score
+        return move_score
 
     # Evaulate the goodness of a state for depth limited AB
     def EvaluateState(self):
 
-        legalMovesNum = len(self.GetLegalMoves())
-        pass
+        # Check mobility of the state
+        legalMoves = self.GetLegalMoves()
+        stateScore = -(len(legalMoves))
+
+        # Check if a corner is available
+        limit = self.size - 1
+        corners = [(0, 0), (0, limit), (limit, 0), (limit, limit)]
+
+        # Check if the current move is a corner play, or if the current state can allow for a corner play
+        # Update both values
+        for corner in corners:
+            if corner in legalMoves:
+                stateScore += -300.0
+
+        return stateScore
 
     def IsLegal(self, move):
         """
