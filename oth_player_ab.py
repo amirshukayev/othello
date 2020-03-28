@@ -344,7 +344,7 @@ class OthelloPlayerAB:
             print(self.board)
 
         # Depth limit
-        if depth == 5:
+        if depth == 12:
             self.state_values.append([move, state_val])
             return ["Unknown", state_val]
 
@@ -383,7 +383,7 @@ class OthelloPlayerAB:
     def minimax(self, curDepth, nodeIndex, maxTurn, scores, targetDepth):
 
         # base case : targetDepth reached
-        if (curDepth == targetDepth):
+        if curDepth == targetDepth:
             return scores[nodeIndex]
 
         if maxTurn:
@@ -400,8 +400,8 @@ def Nega(result):
     do the Nega part of negamax alpha beta
     """
     if result[0] == WIN:
-        return [LOSS, -result[1]]
+        return [LOSS, result[1]]
     elif result[0] == LOSS:
-        return [WIN, -result[1]]
+        return [WIN, result[1]]
     else:
-        return [result[0], -result[1]]
+        return [result[0], result[1]]
