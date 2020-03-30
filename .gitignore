@@ -130,6 +130,7 @@ dmypy.json
 
 # cpp stuff
 cpp/*.o
+cpp/othello
 *.out
 
 # vscode
