@@ -19,7 +19,7 @@ double Now()
 OthelloPlayerAb::OthelloPlayerAb(OthBoard* board)
     : m_board(board),
       m_useKiller(false),
-      m_useOrdering(false),
+      m_useOrdering(true),
       m_useTT(false),
       m_superDebug(false),
       m_timeLimit(60.0),
@@ -50,7 +50,34 @@ AbStats OthelloPlayerAb::GetStats()
 }
 
 void OthelloPlayerAb::CreateMoveOrdering()
-{ }
+{ 
+    int limit = m_board->Size() - 1;
+    othPointList corners;
+
+    int vecSize = limit * (limit+1);
+    m_ordering.resize(vecSize*2, 0.0);
+    
+    using namespace std;
+
+    corners.push_back(p(0, 0));
+    corners.push_back(p(0, limit));
+    corners.push_back(p(limit, 0));
+    corners.push_back(p(limit, limit));
+
+    for (auto const& pt : corners)
+    {
+        int idx = m_board->PointToIndex(pt);
+        m_ordering[idx] = -10;
+    }
+    for (auto const& c : corners)
+    {
+        for (auto const& pt : m_board->AllPointsBeside(c))
+        {
+            int idx = m_board->PointToIndex(pt);
+            m_ordering[idx] = 10;
+        }
+    }
+}
 
 void OthelloPlayerAb::CreateKiller()
 { }
@@ -59,7 +86,17 @@ void OthelloPlayerAb::UpdateKiller(othPoint pt)
 { }
 
 void OthelloPlayerAb::OrderMoves(othPointList& moves)
-{ }
+{ 
+    std::sort(
+        moves.begin(),
+        moves.end(),
+        [&](const othPoint& left, const othPoint& right) {
+            int lidx = m_board->PointToIndex(left);
+            int ridx = m_board->PointToIndex(right);
+            return m_ordering[lidx] < m_ordering[ridx];
+        }
+    );
+}
 
 void OthelloPlayerAb::OrderKiller(othPointList& moves)
 { }
@@ -71,6 +108,10 @@ AbSolveResults OthelloPlayerAb::Solve()
     m_searches = 0;
     m_terminals = 0;
 
+    if (m_useOrdering)
+    {
+        CreateMoveOrdering();
+    }
     std::cout << "size of the board: " << m_board->Size() << std::endl;
     
     auto result = AB();
@@ -131,7 +172,7 @@ AbResult OthelloPlayerAb::AB()
         std::cout << m_board->Str() << std::endl;
 
     auto moves = m_board->GetLegalMoves();
-    if (m_useOrdering && !m_useKiller)
+    if (m_useOrdering)
     {
         OrderMoves(moves);
     }

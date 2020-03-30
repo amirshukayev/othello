@@ -11,7 +11,6 @@ includes logic for legal moves, and ability to undo moves
 
 OthBoard::OthBoard(int size)
 {   
-    std::cout << "creating board" << std::endl;
     // make sure its not too big
     assert(size > 0 && size < 10);
 
@@ -23,9 +22,7 @@ OthBoard::OthBoard(int size)
 }
 
 OthBoard::~OthBoard()
-{ 
-    std::cout << "destroyed" << std::endl;
-}
+{  }
 
 void OthBoard::InitDirs()
 {
@@ -38,8 +35,11 @@ void OthBoard::InitDirs()
     m_dirs.push_back(p(1, -1));
     m_dirs.push_back(p(1, 0));
     m_dirs.push_back(p(1, 1));
+}
 
-    m_dirs.push_back(p(0, 0));
+int OthBoard::PointToIndex(othPoint pt)
+{
+    return pt.first * Size() + pt.second;
 }
 
 void OthBoard::Reset()

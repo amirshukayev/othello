@@ -83,6 +83,8 @@ public:
     othPointList GetLegalMoves();
     othHistory GetHistory();
 
+    int PointToIndex(othPoint pt);
+
 private:
     bool InBounds(othPoint p) const;
     void InitDirs();

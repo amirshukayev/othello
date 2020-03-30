@@ -16,7 +16,7 @@ typedef std::map<std::string,double> AbStats;
 typedef std::pair<othColor,double> AbSolveResults;
 
 typedef int AbResult;
-typedef std::map<othPoint,double> AbOrderingMap;
+typedef std::vector<double> AbOrderingMap;
 
 #define AB_WIN 0
 #define AB_LOSS 1
@@ -24,15 +24,6 @@ typedef std::map<othPoint,double> AbOrderingMap;
 #define AB_ABORTED 3
 
 #define inf 1e9
-
-// AbResult Nega(AbResult r)
-// {
-//     if (r == WIN)
-//         return LOSS;
-//     else if (r == LOSS)
-//         return WIN;
-//     return r;
-// }
 
 class OthelloPlayerAb
 {
