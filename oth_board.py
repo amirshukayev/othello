@@ -273,8 +273,6 @@ class OthBoard:
             if move == corner:
                 move_score += -300.0
 
-        # Check stability (stones that cannot be flipped) VERY IMPORTANT
-
         return move_score
 
     # Evaulate the goodness of a state for depth limited AB
@@ -303,11 +301,6 @@ class OthBoard:
         if self.GetCaptures(move):
             return True
         return False
-
-    def PlayFor(self, p):
-
-
-        pass
 
     def Play(self, p):
         """

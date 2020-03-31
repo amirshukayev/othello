@@ -56,10 +56,16 @@ class CommandEngine:
 
     # Returns a best move for colour args from state
     def _play_for(self, args):
-        current_player = self.board.CurrentPlayerStr()
-        if current_player.lower() != args[0].lower():
-            print("Warning, not solving for current player")
-        self.board.PlayFor(self, args[0])
+        result, _time = self.engine.Solve()
+        if result == MAXIMUM_DEPTH:
+            print('{} has reached Maximum Depth. Search took {}s'.format(self.board.CurrentPlayerStr(), _time))
+        elif result == WIN:
+            print('{} wins. Search took {}s'.format(self.board.CurrentPlayerStr(), _time))
+        elif result == LOSS:
+            print('{} loses. Search took {}s'.format(self.board.CurrentPlayerStr(), _time))
+        elif result == ABORTED:
+            print('search aborted after {} seconds'.format(self.engine.time_limit))
+        print(self.engine.GetStats())
 
     def _legal_moves_cmd(self, args):
         legal_moves = self.board.GetLegalMoves()
@@ -88,9 +94,7 @@ class CommandEngine:
 
     def _solve_cmd(self, args):
         result, _time = self.engine.Solve()
-        if result == MAXIMUM_DEPTH:
-            print('{} has reached Maximum Depth. Search took {}s'.format(self.board.CurrentPlayerStr(), _time))
-        elif result == WIN:
+        if result == WIN:
             print('{} wins. Search took {}s'.format(self.board.CurrentPlayerStr(), _time))
         elif result == LOSS:
             print('{} loses. Search took {}s'.format(self.board.CurrentPlayerStr(), _time))
