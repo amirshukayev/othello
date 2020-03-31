@@ -228,7 +228,7 @@ class OthelloPlayerAB:
     def _ab(self):
         """
         return if current move is win, loss, or some abritrary score (float)
-        IMPORTANT: GAME IS NOT OVER IS NO LEGAL MOVES, USE OthBoard.Terminal()
+        IMPORTANT: GAME IS NOT OVER IF NO LEGAL MOVES, USE OthBoard.Terminal()
         """
         self.searches += 1
 

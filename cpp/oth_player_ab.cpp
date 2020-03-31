@@ -18,9 +18,9 @@ double Now()
 
 OthelloPlayerAb::OthelloPlayerAb(OthBoard* board)
     : m_board(board),
-      m_useKiller(false),
+      m_useKiller(true),
       m_useOrdering(true),
-      m_useTT(false),
+      m_useTT(true),
       m_superDebug(false),
       m_timeLimit(60.0),
       m_start(-INF),
@@ -46,6 +46,8 @@ AbStats OthelloPlayerAb::GetStats()
     stats["searches_per_second"] = m_searches / m_timeTaken;
     stats["time_taken"] = m_timeTaken;
     stats["terminals"] = m_terminals;
+    stats["tt_writes"] = m_ttWrites;
+    stats["tt_hits"] = m_ttHits;
     return stats;
 }
 
@@ -54,8 +56,8 @@ void OthelloPlayerAb::CreateMoveOrdering()
     int limit = m_board->Size() - 1;
     othPointList corners;
 
-    int vecSize = limit * (limit+1);
-    m_ordering.resize(vecSize*2, 0.0);
+    int vecSize = m_board->PointToIndex(p(limit, limit)) + 1;
+    m_ordering.resize(2 * vecSize, 0.0);
     
     using namespace std;
 
@@ -80,10 +82,43 @@ void OthelloPlayerAb::CreateMoveOrdering()
 }
 
 void OthelloPlayerAb::CreateKiller()
-{ }
+{ 
+    int limit = m_board->Size() - 1;
+    int vecSize = m_board->PointToIndex(p(limit, limit)) + 1;
 
-void OthelloPlayerAb::UpdateKiller(othPoint pt)
-{ }
+    m_killer.resize(2 * vecSize, 0.0);
+
+    if (m_useOrdering)
+    {
+        m_useOrdering = false; // set it to false cause we will do ordering stuff here
+
+        othPointList corners;
+        using namespace std;
+
+        corners.push_back(p(0, 0));
+        corners.push_back(p(0, limit));
+        corners.push_back(p(limit, 0));
+        corners.push_back(p(limit, limit));
+
+        for (auto const& pt : corners)
+        {
+            int idx = m_board->PointToIndex(pt);
+            m_killer[idx] = -10000.0;
+
+            for (auto const& ptb : m_board->AllPointsBeside(pt))
+            {
+                int idx2 = m_board->PointToIndex(ptb);
+                m_killer[idx2] = 10000.0;
+            }
+        }
+    }
+}
+
+void OthelloPlayerAb::UpdateKiller(othPoint pt, double val)
+{ 
+    int idx = m_board->PointToIndex(pt);
+    m_killer[idx] -= val;
+}
 
 void OthelloPlayerAb::OrderMoves(othPointList& moves)
 { 
@@ -99,7 +134,17 @@ void OthelloPlayerAb::OrderMoves(othPointList& moves)
 }
 
 void OthelloPlayerAb::OrderKiller(othPointList& moves)
-{ }
+{ 
+    std::sort(
+        moves.begin(),
+        moves.end(),
+        [&](const othPoint& left, const othPoint& right) {
+            int lidx = m_board->PointToIndex(left);
+            int ridx = m_board->PointToIndex(right);
+            return m_killer[lidx] < m_killer[ridx];
+        }
+    );
+}
 
 AbSolveResults OthelloPlayerAb::Solve()
 { 
@@ -111,6 +156,10 @@ AbSolveResults OthelloPlayerAb::Solve()
     if (m_useOrdering)
     {
         CreateMoveOrdering();
+    }
+    if (m_useKiller)
+    {
+        CreateKiller();
     }
     std::cout << "size of the board: " << m_board->Size() << std::endl;
     
@@ -150,6 +199,12 @@ AbResult OthelloPlayerAb::AB()
         return AB_ABORTED;
     }
 
+    AbResult result;
+    if (TTread(result)) // tt hit
+    {
+        return result;
+    }
+
     if (m_board->Terminal())
     {
         m_terminals++;
@@ -159,12 +214,16 @@ AbResult OthelloPlayerAb::AB()
         {
             // AB shouldn't tie
             assert(false);
+
+            TTwrite(AB_DRAW);
             return AB_DRAW;
         }
         if (boardResults.first == m_board->CurrentPlayer())
         {
+            TTwrite(AB_DRAW);
             return AB_WIN;
         }
+        TTwrite(AB_LOSS);
         return AB_LOSS;
     }
 
@@ -197,10 +256,16 @@ AbResult OthelloPlayerAb::AB()
                 std::cout << "beta cut" << std::endl;
             
             if (m_useKiller)
-                UpdateKiller(pt);
+                UpdateKiller(pt, 1.0);
+            
+            TTwrite(AB_WIN);
             return AB_WIN;
         }
+        // else if (m_useKiller) // a losing move should be punished a bit less
+        //     UpdateKiller(pt, -0.2);
+
     }
+    TTwrite(AB_LOSS);
     return AB_LOSS;
 }
 
@@ -216,4 +281,30 @@ AbResult OthelloPlayerAb::Nega(AbResult r)
     else if (r == AB_LOSS)
         return AB_WIN;
     return AB_DRAW;
+}
+
+bool OthelloPlayerAb::TTread(AbResult& res)
+{
+    if (!m_useTT)
+        return false; // never read from tt if not in use
+    uint64_t hashCode = m_board->Hash();
+    if (m_tt.count(hashCode) == 0)
+    {
+        return false;
+    } 
+    else
+    {
+        m_ttHits++;
+        res = m_tt[hashCode];
+        return true;
+    }
+}
+
+void OthelloPlayerAb::TTwrite(AbResult res)
+{
+    if (!m_useTT)
+        return;
+    m_ttWrites++;
+    uint64_t hashCode = m_board->Hash();
+    m_tt[hashCode] = res; // overrwrite cause it doesn't matter
 }

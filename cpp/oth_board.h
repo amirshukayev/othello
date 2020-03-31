@@ -10,6 +10,8 @@ includes logic for legal moves, and ability to undo moves
 #include <assert.h>
 #include <string>
 #include <vector>
+#include <random>
+#include <iostream>
 
 #define dp__ printf("LINE #%d FILE: %s\n", _LINE_, _FILE_);
 
@@ -25,6 +27,50 @@ typedef std::vector<std::pair<othPoint,othPointList> > othHistory;
 #define BORDER 3
 
 #define INF 200002
+
+using std::cout;
+using std::endl;
+
+class RandTable
+{
+public:
+    RandTable(int size);
+    ~RandTable();
+    uint64_t Get(int x, int y) const;
+    uint64_t Get(othPoint pt) const;
+
+private:
+    std::vector<std::vector<uint64_t> > m_table;
+};
+
+inline RandTable::RandTable(int size)
+{
+    std::random_device rd;
+    std::mt19937_64 e2(rd());
+    std::uniform_int_distribution<uint64_t> dist(std::llround(std::pow(2,61)), std::llround(std::pow(2,62)));
+
+    m_table.resize(size, std::vector<uint64_t>(size, 0));
+    for (int i = 0; i < size; i++) 
+    {
+        for (int j = 0; j < size; j++) 
+        {
+            m_table[i][j] = dist(e2);
+        }
+    }
+}
+
+inline RandTable::~RandTable()
+{ }
+
+inline uint64_t RandTable::Get(int x, int y) const
+{
+    return m_table[x][y];
+}
+
+inline uint64_t RandTable::Get(othPoint pt) const
+{
+    return Get(pt.first, pt.second);
+}
 
 inline othColor opp(othColor color) 
 {
@@ -100,6 +146,11 @@ private:
     othColor m_currentPlayer;
 
     othPointList m_dirs;
+
+    // hash map stuff
+    RandTable m_randTableEmpty;
+    RandTable m_randTableBlack;
+    RandTable m_randTableWhite;
 };
 
 inline int OthBoard::Size()

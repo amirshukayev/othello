@@ -10,6 +10,9 @@ includes logic for legal moves, and ability to undo moves
 #include <sstream>
 
 OthBoard::OthBoard(int size)
+    : m_randTableEmpty(RandTable(size)),
+      m_randTableBlack(RandTable(size)),
+      m_randTableWhite(RandTable(size))
 {   
     // make sure its not too big
     assert(size > 0 && size < 10);
@@ -56,6 +59,11 @@ void OthBoard::Reset()
     Place(p(m2, m2), WHITE);
     Place(p(m1, m2), BLACK);
     Place(p(m2, m1), BLACK);
+
+    // tt stuff
+    m_randTableEmpty = RandTable(m_size);
+    m_randTableBlack = RandTable(m_size);
+    m_randTableWhite = RandTable(m_size);
 }
 
 std::string ColorToString(othColor c)
@@ -331,7 +339,21 @@ std::pair<othColor,float> OthBoard::Winner() const
 
 uint64_t OthBoard::Hash() const
 {
-    return 1;
+    uint64_t code = 0;
+    for (int i = 0; i < m_size; i++) 
+    {
+        for (int j = 0; j < m_size; j++)
+        {
+            othPoint pt = p(i, j);
+            if (AccessBoard(pt) == BLACK)
+                code ^= m_randTableBlack.Get(pt);
+            else if (AccessBoard(pt) == WHITE)
+                code ^= m_randTableWhite.Get(pt);
+            else if (AccessBoard(pt) == EMPTY)
+                code ^= m_randTableEmpty.Get(pt);
+        }
+    }
+    return code;
 }
 
 void OthBoard::Place(othPoint pt, othColor c)

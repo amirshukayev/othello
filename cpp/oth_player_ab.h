@@ -11,6 +11,7 @@ negamax alpha beta Othello player
 #include <string>
 #include <map>
 #include <chrono>
+#include <unordered_map>
 
 typedef std::map<std::string,double> AbStats;
 typedef std::pair<othColor,double> AbSolveResults;
@@ -40,13 +41,16 @@ public:
 private:
     void CreateMoveOrdering();
     void CreateKiller();
-    void UpdateKiller(othPoint m);
+    void UpdateKiller(othPoint m, double val);
     void OrderMoves(othPointList& moves);
     void OrderKiller(othPointList& moves);
     bool Abort();
 
     AbResult AB();
     AbResult Nega(AbResult r);
+
+    bool TTread(AbResult& res);
+    void TTwrite(AbResult r);
 
 
 private:
@@ -67,6 +71,11 @@ private:
 
     bool m_useKiller;
     AbOrderingMap m_killer;
+
+    // tt 
+    std::unordered_map<uint64_t, AbResult> m_tt;
+    int m_ttHits;
+    int m_ttWrites;
 };
 
 #endif // OTH_PLAYER_AB_H
