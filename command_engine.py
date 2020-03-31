@@ -68,6 +68,12 @@ class CommandEngine:
             # Get a move:
             move = self.engine.BestMove()
 
+            # If there are no legal moves
+            if not move[1]:
+                winner, score = self.board.Winner()
+                print("Winner is {}, with score {}".format(winner, score))
+                return False
+
             # Play Move:
             if not self.board.Play(move[1]):
                 print("Illegal Move")
@@ -78,6 +84,7 @@ class CommandEngine:
                 winner, score = self.board.Winner()
                 print("Winner is {}, with score {}" .format(winner, score))
                 return False
+            print("")
 
     def _legal_moves_cmd(self, args):
         legal_moves = self.board.GetLegalMoves()

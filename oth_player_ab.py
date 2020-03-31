@@ -324,6 +324,9 @@ class OthelloPlayerAB:
         solving_for = self.board.current_player
         results = []
 
+        if len(first_moves) == 0:
+            return [self.max_reached, False, results]
+
         max_depth = 15
 
         if self.board.size == 5:
@@ -334,6 +337,8 @@ class OthelloPlayerAB:
             max_depth = 5
         if self.board.size == 8:
             max_depth = 5
+        if self.board.size > 8:
+            max_depth = 4
 
         for first_move in first_moves:
             self.first_state_values[first_move] = 0
