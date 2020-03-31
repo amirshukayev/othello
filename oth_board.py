@@ -304,6 +304,11 @@ class OthBoard:
             return True
         return False
 
+    def PlayFor(self, p):
+
+
+        pass
+
     def Play(self, p):
         """
         play at point p 

@@ -3,7 +3,7 @@ parses commands and executes them on a given board
 """
 
 import sys
-from oth_player_ab import WIN, LOSS, DRAW, ABORTED
+from oth_player_ab import WIN, LOSS, DRAW, ABORTED, MAXIMUM_DEPTH
 
 SUCCEED = 1
 
@@ -24,6 +24,7 @@ class CommandEngine:
             "set_size": self._set_size_cmd,
             "time_limit": self._set_time_limit_cmd,
             "showboard": self._show_board_cmd,
+            "play_for": self._play_for,
             "solve": self._solve_cmd,
             "undo": self._undo_cmd,
             "use_killer": self._use_killer_cmd,
@@ -53,6 +54,13 @@ class CommandEngine:
     def _commands_cmd(self, args):
         print(' '.join(self.commands.keys()))
 
+    # Returns a best move for colour args from state
+    def _play_for(self, args):
+        current_player = self.board.CurrentPlayerStr()
+        if current_player.lower() != args[0].lower():
+            print("Warning, not solving for current player")
+        self.board.PlayFor(self, args[0])
+
     def _legal_moves_cmd(self, args):
         legal_moves = self.board.GetLegalMoves()
         if not legal_moves:
@@ -80,13 +88,13 @@ class CommandEngine:
 
     def _solve_cmd(self, args):
         result, _time = self.engine.Solve()
-        if result[0] == WIN:
+        if result == MAXIMUM_DEPTH:
+            print('{} has reached Maximum Depth. Search took {}s'.format(self.board.CurrentPlayerStr(), _time))
+        elif result == WIN:
             print('{} wins. Search took {}s'.format(self.board.CurrentPlayerStr(), _time))
-            print(result[1])
-        elif result[0] == LOSS:
+        elif result == LOSS:
             print('{} loses. Search took {}s'.format(self.board.CurrentPlayerStr(), _time))
-            print(result[1])
-        elif result[0] == ABORTED:
+        elif result == ABORTED:
             print('search aborted after {} seconds'.format(self.engine.time_limit))
         print(self.engine.GetStats())
 
