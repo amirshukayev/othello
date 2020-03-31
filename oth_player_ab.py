@@ -32,7 +32,7 @@ class OthelloPlayerAB:
         self.max_reached = False
         self.first_state_values = {}
         self.moves_values = {}
-        self.winning_moves = {}
+        self.winning_moves = []
 
         # transposition table
         self.use_tt = False
@@ -138,27 +138,12 @@ class OthelloPlayerAB:
 
     def OrderMovesNega(self, moves):
         ordering = {}
+
         for m in moves:
-            move_value = self.board.EvaluateMove(m)
-            ordering[m] = move_value
-
-            if (self.board.current_player, m) not in self.moves_values.keys():
-                self.moves_values[(self.board.current_player, m)] = move_value
-            else:
-                self.moves_values[(self.board.current_player, m)] += move_value
-
+            ordering[m] = self.board.EvaluateMove(m)
         sorted_moves = sorted(moves, key=lambda x: ordering.get(x, 0.0))
+
         return sorted_moves
-
-    def OrderMovesNegaWithListing(self, moves, first_move):
-        ordering = {}
-        for m in moves:
-            move_value = self.board.EvaluateMove(m)
-            ordering[(m, self.board.current_player)] = move_value
-            self.first_state_values[(first_move, self.board.current_player)] += move_value
-
-        sorted_moves = sorted(moves, key=lambda x: ordering.get(x, 0.0))
-        return [sorted_moves, ordering]
 
     def OrderKiller(self, moves):
         """
@@ -335,14 +320,24 @@ class OthelloPlayerAB:
             self.CreateMoveOrdering()
             self.CreateKiller()
 
-        if self.use_killer and self.use_ordering:
-            print("warning: if both use_killer and use_ordering are set, killer heuristic will not be used")
+        first_moves = self.board.GetLegalMoves()
+        solving_for = self.board.current_player
+        print("Getting Best move for {}" .format(solving_for))
+        results = []
 
-        result = self.negamaxBoolean()
+        for first_move in first_moves:
+            self.first_state_values[first_move] = 0
+            self.board.Play(first_move)
+            results.append([self.negamaxBooleanWithDepth(0, first_move, solving_for),
+                            first_move, self.board.current_player])
+            self.board.Undo()
 
-        return result
+        print(self.first_state_values)
+        print(results)
 
-    def negamaxBooleanWithDepth(self, depth):
+        return None
+
+    def negamaxBooleanWithDepth(self, depth, first_move, solving_for):
         """
         :param depth: the depth you want the search to go up to, an integer
         :return:
@@ -350,70 +345,46 @@ class OthelloPlayerAB:
         self.searches += 1
 
         # Depth limit, get a value function for all of the original actions.
-        if depth == 6:
+        if depth == 15 and self.board.size > 4:
             self.max_reached = True
             return MAXIMUM_DEPTH
-
-        if len(self.board.move_history) > self.board.size ** 2 - 4:
-            raise RuntimeError("move history too long")
-
-        if self.Abort():
-            return LOSS
-
-        tt_res = self.TTread()
-        if tt_res is not None:
-            return tt_res
 
         if self.board.Terminal():
 
             self.terminals += 1
             winner, _ = self.board.Winner()
 
-            if winner == EMPTY:
-                self.TTwrite(DRAW)
-                raise RuntimeError("can't handle DRAWS yet")
-                return DRAW
-
             if self.board.CurrentPlayer() == winner:
-                self.TTwrite(WIN)
                 return WIN
-
-            self.TTwrite(LOSS)
             return LOSS
 
-        if self.super_debug:
-            print(self.board)
-
         # Get moves and then order them
-        moves = self.board.GetLegalMoves()
+        moves = self.OrderMovesNegaWithListing(self.board.GetLegalMoves(), first_move, solving_for)
 
-        if self.use_ordering and not self.use_killer:
-            moves = self.OrderMovesNega(moves)
+        for move in moves:
 
-        elif self.use_killer:
-            moves = self.OrderKiller(moves)
-
-        for m in moves:
-
-            if not self.board.Play(m):
-                raise RuntimeError("illegal move played")
-
-            result = Nega(self.negamaxBoolean(depth + 1))
+            self.board.Play(move)
+            result = Nega(self.negamaxBooleanWithDepth(depth + 1, first_move, solving_for))
             self.board.Undo()
 
             if result == WIN:
-                self.beta_cuts += 1
-                if self.super_debug:
-                    print("beta cut")
-
-                if self.use_killer:
-                    self.UpdateKiller(m)
-
-                self.TTwrite(WIN)
                 return WIN
-
-        self.TTwrite(LOSS)
         return LOSS
+
+    def OrderMovesNegaWithListing(self, moves, first_move, solving_for):
+        ordering = {}
+
+        for m in moves:
+            move_value = self.board.EvaluateMove(m)
+            ordering[m] = move_value
+
+            if self.board.current_player == solving_for:
+                self.first_state_values[first_move] += move_value
+            else:
+                self.first_state_values[first_move] += -move_value
+
+        sorted_moves = sorted(moves, key=lambda x: ordering.get(x, 0.0))
+        return sorted_moves
 
 
 def Nega(result):
