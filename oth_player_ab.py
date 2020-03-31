@@ -319,6 +319,29 @@ class OthelloPlayerAB:
         self.TTwrite(LOSS)
         return LOSS
 
+    def BestMove(self):
+        """
+        solves board's current position for the current player
+        returns following:
+        result, time_taken
+        """
+
+        # if the size of the current board search is different than
+        # previous, we need to reset the transposition table
+        # we can also take this chance to reset the ordering table
+        if self.tt_size != self.board.size:
+            self.tt = {}
+            self.tt_size = self.board.size
+            self.CreateMoveOrdering()
+            self.CreateKiller()
+
+        if self.use_killer and self.use_ordering:
+            print("warning: if both use_killer and use_ordering are set, killer heuristic will not be used")
+
+        result = self.negamaxBoolean()
+
+        return result
+
     def negamaxBooleanWithDepth(self, depth):
         """
         :param depth: the depth you want the search to go up to, an integer

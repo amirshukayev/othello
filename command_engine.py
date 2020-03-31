@@ -24,7 +24,7 @@ class CommandEngine:
             "set_size": self._set_size_cmd,
             "time_limit": self._set_time_limit_cmd,
             "showboard": self._show_board_cmd,
-            "play_for": self._play_for,
+            "best_move": self._best_move,
             "solve": self._solve_cmd,
             "undo": self._undo_cmd,
             "use_killer": self._use_killer_cmd,
@@ -55,17 +55,9 @@ class CommandEngine:
         print(' '.join(self.commands.keys()))
 
     # Returns a best move for colour args from state
-    def _play_for(self, args):
-        result, _time = self.engine.Solve()
-        if result == MAXIMUM_DEPTH:
-            print('{} has reached Maximum Depth. Search took {}s'.format(self.board.CurrentPlayerStr(), _time))
-        elif result == WIN:
-            print('{} wins. Search took {}s'.format(self.board.CurrentPlayerStr(), _time))
-        elif result == LOSS:
-            print('{} loses. Search took {}s'.format(self.board.CurrentPlayerStr(), _time))
-        elif result == ABORTED:
-            print('search aborted after {} seconds'.format(self.engine.time_limit))
-        print(self.engine.GetStats())
+    def _best_move(self, args):
+        result = self.engine.BestMove()
+        print(result)
 
     def _legal_moves_cmd(self, args):
         legal_moves = self.board.GetLegalMoves()
