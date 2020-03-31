@@ -29,7 +29,8 @@ class CommandEngine:
             "undo": self._undo_cmd,
             "use_killer": self._use_killer_cmd,
             "use_ordering": self._use_ordering_cmd,
-            "use_tt": self._use_tt_cmd
+            "use_tt": self._use_tt_cmd,
+            "self_play": self._self_play
         }
 
     def run(self):
@@ -57,7 +58,26 @@ class CommandEngine:
     # Returns a best move for colour args from state
     def _best_move(self, args):
         result = self.engine.BestMove()
-        print(result)
+        print(result[1])
+        if result[0]:
+            print('Search has hit maximum depth, no win or loss calculated')
+        print('Top move: {}'.format(result))
+
+    def _self_play(self, args):
+        while True:
+            # Get a move:
+            move = self.engine.BestMove()
+
+            # Play Move:
+            if not self.board.Play(move[1]):
+                print("Illegal Move")
+
+            # Set to other player:
+            print(self.board)
+            if self.board.Terminal():
+                winner, score = self.board.Winner()
+                print("Winner is {}, with score {}" .format(winner, score))
+                return False
 
     def _legal_moves_cmd(self, args):
         legal_moves = self.board.GetLegalMoves()

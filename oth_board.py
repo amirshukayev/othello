@@ -243,12 +243,15 @@ class OthBoard:
         player_count = 0
         opponent_count = 0
         move_score = 0.0
+
+        """
         for i in range(self.size):
             for j in range(self.size):
                 if self.AccessBoard(i, j) == self.current_player:
                     player_count += 1
                 elif self.AccessBoard(i, j) != 0:
                     opponent_count += 1
+        """
 
         # Move Score update on Mobility
         if len(self.move_history) != 0:

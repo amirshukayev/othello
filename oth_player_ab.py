@@ -322,22 +322,38 @@ class OthelloPlayerAB:
 
         first_moves = self.board.GetLegalMoves()
         solving_for = self.board.current_player
-        print("Getting Best move for {}" .format(solving_for))
         results = []
+
+        max_depth = 15
+
+        if self.board.size == 5:
+            max_depth = 7
+        if self.board.size == 6:
+            max_depth = 6
+        if self.board.size == 7:
+            max_depth = 5
+        if self.board.size == 8:
+            max_depth = 5
 
         for first_move in first_moves:
             self.first_state_values[first_move] = 0
             self.board.Play(first_move)
-            results.append([self.negamaxBooleanWithDepth(0, first_move, solving_for),
+            results.append([self.negamaxBooleanWithDepth(0, first_move, solving_for, max_depth),
                             first_move, self.board.current_player])
             self.board.Undo()
 
-        print(self.first_state_values)
-        print(results)
+        legal_moves = {}
+        for move in first_moves:
+            legal_moves[move] = self.first_state_values[move]
 
-        return None
+        if self.board.current_player == 1:
+            Keymax = min(legal_moves, key=legal_moves.get)
+        else:
+            Keymax = max(legal_moves, key=legal_moves.get)
 
-    def negamaxBooleanWithDepth(self, depth, first_move, solving_for):
+        return [self.max_reached, Keymax, results]
+
+    def negamaxBooleanWithDepth(self, depth, first_move, solving_for, max_depth):
         """
         :param depth: the depth you want the search to go up to, an integer
         :return:
@@ -345,7 +361,7 @@ class OthelloPlayerAB:
         self.searches += 1
 
         # Depth limit, get a value function for all of the original actions.
-        if depth == 15 and self.board.size > 4:
+        if depth == max_depth and self.board.size > 4:
             self.max_reached = True
             return MAXIMUM_DEPTH
 
@@ -364,7 +380,7 @@ class OthelloPlayerAB:
         for move in moves:
 
             self.board.Play(move)
-            result = Nega(self.negamaxBooleanWithDepth(depth + 1, first_move, solving_for))
+            result = Nega(self.negamaxBooleanWithDepth(depth + 1, first_move, solving_for, max_depth))
             self.board.Undo()
 
             if result == WIN:
