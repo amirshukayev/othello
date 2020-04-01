@@ -180,11 +180,12 @@ class OthelloPlayerAB:
 
         result = self.negamaxBoolean()
         self.time_taken = time() - self.start
+        winner, score = self.board.Winner()
 
         if self.Abort():
-            return ABORTED, -1
+            return ABORTED, -1, -1
 
-        return result, time() - self.start
+        return result, time() - self.start, score
 
     def Abort(self):
         """
@@ -327,7 +328,7 @@ class OthelloPlayerAB:
         if len(first_moves) == 0:
             return [self.max_reached, False, results]
 
-        max_depth = 15
+        max_depth = 20
 
         if self.board.size == 5:
             max_depth = 7
@@ -336,12 +337,12 @@ class OthelloPlayerAB:
         if self.board.size == 7:
             max_depth = 5
         if self.board.size == 8:
-            max_depth = 5
+            max_depth = 4
         if self.board.size > 8:
             max_depth = 4
 
         for first_move in first_moves:
-            self.first_state_values[first_move] = 0
+            self.first_state_values[(first_move, solving_for)] = 0
             self.board.Play(first_move)
             results.append([self.negamaxBooleanWithDepth(0, first_move, solving_for, max_depth),
                             first_move, self.board.current_player])
@@ -349,10 +350,10 @@ class OthelloPlayerAB:
 
         legal_moves = {}
         for move in first_moves:
-            legal_moves[move] = self.first_state_values[move]
+            legal_moves[move] = self.first_state_values[(move, solving_for)]
 
         if self.board.current_player == 1:
-            Keymax = min(legal_moves, key=legal_moves.get)
+            Keymax = max(legal_moves, key=legal_moves.get)
         else:
             Keymax = max(legal_moves, key=legal_moves.get)
 
@@ -400,9 +401,9 @@ class OthelloPlayerAB:
             ordering[m] = move_value
 
             if self.board.current_player == solving_for:
-                self.first_state_values[first_move] += move_value
-            else:
-                self.first_state_values[first_move] += -move_value
+                self.first_state_values[(first_move, solving_for)] += move_value
+            #else:
+            #    self.first_state_values[(first_move, solving_for)] += move_value
 
         sorted_moves = sorted(moves, key=lambda x: ordering.get(x, 0.0))
         return sorted_moves

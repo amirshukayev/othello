@@ -112,7 +112,7 @@ class CommandEngine:
         print(self.board)
 
     def _solve_cmd(self, args):
-        result, _time = self.engine.Solve()
+        result, _time, score = self.engine.Solve()
         if result == WIN:
             print('{} wins. Search took {}s'.format(self.board.CurrentPlayerStr(), _time))
         elif result == LOSS:

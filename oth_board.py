@@ -157,6 +157,26 @@ class OthBoard:
                 points.append((x+dx, y+dy))
         return points
 
+    def isSafe(self, p, colour):
+        # Check if a corner is available
+        neighbours = self.AllPointsBeside(p)
+
+        if isinstance(p, str):
+            p = self.StrToPoint(p)
+
+        x, y = p
+
+        limit = self.size - 1
+        corners = [(0, 0), (0, limit), (limit, 0), (limit, limit)]
+
+        for corner in corners:
+            if self.AccessBoard(corner[0], corner[1]) == colour:
+                pass
+
+        for n in neighbours:
+            if self.AccessBoard(x, y) == colour:
+                self.isSafe(n, colour)
+
     def AccessBoard(self, x, y):
         """
         returns the color of the board at point x, y
@@ -243,7 +263,6 @@ class OthBoard:
         player_count = 0
         opponent_count = 0
         move_score = 0.0
-
         """
         for i in range(self.size):
             for j in range(self.size):
@@ -255,13 +274,13 @@ class OthBoard:
 
         # Move Score update on Mobility
         if len(self.move_history) != 0:
-            move_score += len(legal_moves) / len(self.move_history)
+            move_score += -len(legal_moves) / len(self.move_history)
 
         self.Undo()
 
         # Get the difference in the total discs captured.
         captured = self.NumCaptured(move) * len(self.move_history)
-        difference = (player_count + captured * 2 + 1 - opponent_count) * len(self.move_history)
+        difference = (player_count + captured * 2 + 1 - opponent_count) * len(self.move_history) * len(self.move_history)
 
         # Start the original action value with the negative number of disc captures
         move_score += float(captured) + difference
@@ -269,12 +288,17 @@ class OthBoard:
         # Check if move creates corner state --> better (checked at all times)
         limit = self.size - 1
         corners = [(0, 0), (0, limit), (limit, 0), (limit, limit)]
+        adjacent_corners = [(1, 1), (1, limit-1), (limit-1, 1), (limit-1, limit-1)]
 
         # Check if the current move is a corner play, or if the current state can allow for a corner play
         # Update both values
         for corner in corners:
             if move == corner:
-                move_score += -300.0
+                move_score += -400.0
+
+        for acorner in adjacent_corners:
+            if move == acorner:
+                move_score += 400.0
 
         return move_score
 
