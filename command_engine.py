@@ -20,6 +20,7 @@ class CommandEngine:
             "commands": self._commands_cmd,
             "moves": self._legal_moves_cmd,
             "play": self._play_cmd,
+            "play_game": self._play_game_cmd,
             "reset": self._reset_cmd,
             "set_size": self._set_size_cmd,
             "time_limit": self._set_time_limit_cmd,
@@ -96,6 +97,72 @@ class CommandEngine:
     def _play_cmd(self, args):
         if not self.board.Play(args[0]):
             print("Illegal Move")
+
+    def _play_game_cmd(self, args):
+        # Get the first or second player:
+        if int(args[0]) == 1:
+            while True:
+
+                if self.board.Terminal():
+                    winner, score = self.board.Winner()
+                    print("Winner is {}, with score {}".format(winner, score))
+                    return False
+
+                print(self.board)
+                while True:
+                    print("Legal Moves: {}" .format(self.board.GetLegalMoves()))
+                    player_move = input("What is your move? ")
+                    # Play Move:
+                    if not self.board.Play(player_move):
+                        print("Illegal Move")
+                    else:
+                        break
+
+                print(self.board)
+
+                move = self.engine.BestMove()
+
+                if not move[1]:
+                    winner, score = self.board.Winner()
+                    print("Winner is {}, with score {}".format(winner, score))
+                    return False
+
+                # Play Move:
+                if not self.board.Play(move[1]):
+                    print("Illegal Move")
+
+                print("")
+
+        # player goes second.
+        elif int(args[0]) == 2:
+            while True:
+                move = self.engine.BestMove()
+
+                if not move[1]:
+                    winner, score = self.board.Winner()
+                    print("Winner is {}, with score {}".format(winner, score))
+                    return False
+
+                # Play Move:
+                if not self.board.Play(move[1]):
+                    print("Illegal Move")
+
+                print(self.board)
+
+                while True:
+                    print("Legal Moves: {}".format(self.board.GetLegalMoves()))
+                    player_move = input("What is your move? ")
+                    # Play Move:
+                    if not self.board.Play(player_move):
+                        print("Illegal Move")
+                    else:
+                        break
+
+                if self.board.Terminal():
+                    winner, score = self.board.Winner()
+                    print("Winner is {}, with score {}".format(winner, score))
+                    return False
+                print("")
 
     def _reset_cmd(self, args):
         self.board.Reset()

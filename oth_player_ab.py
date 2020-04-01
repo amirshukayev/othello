@@ -46,7 +46,7 @@ class OthelloPlayerAB:
 
         # killer heuristic
         # TODO SET TO FALSE
-        self.use_killer = False
+        self.use_killer = True
         self._killer = {}
 
     def SetTimeLimit(self, time_limit):
@@ -402,8 +402,8 @@ class OthelloPlayerAB:
 
             if self.board.current_player == solving_for:
                 self.first_state_values[(first_move, solving_for)] += move_value
-            #else:
-            #    self.first_state_values[(first_move, solving_for)] += move_value
+            else:
+                self.first_state_values[(first_move, solving_for)] += move_value
 
         sorted_moves = sorted(moves, key=lambda x: ordering.get(x, 0.0))
         return sorted_moves

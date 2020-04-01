@@ -263,18 +263,16 @@ class OthBoard:
         player_count = 0
         opponent_count = 0
         move_score = 0.0
-        """
         for i in range(self.size):
             for j in range(self.size):
                 if self.AccessBoard(i, j) == self.current_player:
                     player_count += 1
                 elif self.AccessBoard(i, j) != 0:
                     opponent_count += 1
-        """
 
         # Move Score update on Mobility
         if len(self.move_history) != 0:
-            move_score += -len(legal_moves) / len(self.move_history)
+            move_score += len(legal_moves) / len(self.move_history)
 
         self.Undo()
 
@@ -283,7 +281,7 @@ class OthBoard:
         difference = (player_count + captured * 2 + 1 - opponent_count) * len(self.move_history) * len(self.move_history)
 
         # Start the original action value with the negative number of disc captures
-        move_score += float(captured) + difference
+        move_score += (float(captured) + difference)
 
         # Check if move creates corner state --> better (checked at all times)
         limit = self.size - 1
