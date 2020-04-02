@@ -157,6 +157,26 @@ class OthBoard:
                 points.append((x+dx, y+dy))
         return points
 
+    def isSafe(self, p, colour):
+        # Check if a corner is available
+        neighbours = self.AllPointsBeside(p)
+
+        if isinstance(p, str):
+            p = self.StrToPoint(p)
+
+        x, y = p
+
+        limit = self.size - 1
+        corners = [(0, 0), (0, limit), (limit, 0), (limit, limit)]
+
+        for corner in corners:
+            if self.AccessBoard(corner[0], corner[1]) == colour:
+                pass
+
+        for n in neighbours:
+            if self.AccessBoard(x, y) == colour:
+                self.isSafe(n, colour)
+
     def AccessBoard(self, x, y):
         """
         returns the color of the board at point x, y
@@ -231,34 +251,75 @@ class OthBoard:
 
         return len(self.GetCaptures(move))
 
-    def EvaluateState(self, move):
+    def EvaluateMove(self, move):
         """
         :param move: The move taken by the agent (needs to be (x, y) tuple form)
         :return: retuns a tuple of two floats based on the desirability of the current state and move
         """
-        # All legal moves from the state
+        move = self.StrToPoint(move)
+
+        self.Play(move)
         legal_moves = self.GetLegalMoves()
+        player_count = 0
+        opponent_count = 0
+        move_score = 0.0
+        move_length = float(len(self.move_history))
+
+        for i in range(self.size):
+            for j in range(self.size):
+                if self.AccessBoard(i, j) == self.current_player:
+                    player_count += 1
+                elif self.AccessBoard(i, j) != 0:
+                    opponent_count += 1
+
+        # Move Score update on Mobility
+        if move_length != 0:
+            move_score += len(legal_moves) / move_length
+
+        self.Undo()
+
+        # Get the difference in the total discs captured.
+        captured = self.NumCaptured(move) * move_length
+        difference = (player_count + captured * 2 + 1 - opponent_count) * move_length * move_length
 
         # Start the original action value with the negative number of disc captures
-        move_score = float(-self.NumCaptured(move))
-
-        # Measure mobility (how many moves the player can make, the more the better)
-        state_score = -float(len(legal_moves))
+        move_score += (float(captured) + difference)
 
         # Check if move creates corner state --> better (checked at all times)
-        limit = self.board.size - 1
+        limit = self.size - 1
         corners = [(0, 0), (0, limit), (limit, 0), (limit, limit)]
+        adjacent_corners = [(1, 1), (1, limit-1), (limit-1, 1), (limit-1, limit-1)]
 
         # Check if the current move is a corner play, or if the current state can allow for a corner play
         # Update both values
         for corner in corners:
             if move == corner:
-                move_score += -2.0
-            if corner in legal_moves:
-                state_score += -2.0
+                move_score += (-4000000.0 * move_length * self.size)
 
-        # Check stability (stones that cannot be flipped) VERY IMPORTANT
-        return (state_score, move_score)
+        #for acorner in adjacent_corners:
+        #    if move == acorner:
+        #        move_score += 400.0 * move_length
+
+        return move_score
+
+    # Evaulate the goodness of a state for depth limited AB
+    def EvaluateState(self):
+
+        # Check mobility of the state
+        legalMoves = self.GetLegalMoves()
+        stateScore = -(len(legalMoves))
+
+        # Check if a corner is available
+        limit = self.size - 1
+        corners = [(0, 0), (0, limit), (limit, 0), (limit, limit)]
+
+        # Check if the current move is a corner play, or if the current state can allow for a corner play
+        # Update both values
+        for corner in corners:
+            if corner in legalMoves:
+                stateScore += -300.0
+
+        return stateScore
 
     def IsLegal(self, move):
         """
@@ -272,12 +333,12 @@ class OthBoard:
         """
         play at point p 
         """
-        if p.lower() == 'pass':
-            raise RuntimeError("passing during AB search, incorrect")
-            self.current_player = opp(self.current_player)
-            return True
 
         if isinstance(p, str):
+            if p.lower() == 'pass':
+                raise RuntimeError("passing during AB search, incorrect")
+                self.current_player = opp(self.current_player)
+                return True
             p = self.StrToPoint(p)
         
         captures = self.GetCaptures(p)

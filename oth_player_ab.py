@@ -10,6 +10,7 @@ from collections import defaultdict
 WIN = 'win'
 LOSS = 'lose'
 DRAW = 'draw'
+MAXIMUM_DEPTH = 'maximum depth'
 ABORTED = 'aborted'
 
 INF = 1e9
@@ -28,6 +29,10 @@ class OthelloPlayerAB:
 
         self.searches = 0
         self.terminals = 0
+        self.max_reached = False
+        self.first_state_values = {}
+        self.moves_values = {}
+        self.winning_moves = []
 
         # transposition table
         self.use_tt = False
@@ -129,9 +134,16 @@ class OthelloPlayerAB:
         sorted_moves = sorted(moves, key=lambda x: ordering_new.get(x, 0.0))
 
         return sorted_moves
-
         # return sorted(moves, key=lambda x: self._ordering.get(x, 0.0))
 
+    def OrderMovesNega(self, moves):
+        ordering = {}
+
+        for m in moves:
+            ordering[m] = self.board.EvaluateMove(m)
+        sorted_moves = sorted(moves, key=lambda x: ordering.get(x, 0.0))
+
+        return sorted_moves
 
     def OrderKiller(self, moves):
         """
@@ -155,7 +167,7 @@ class OthelloPlayerAB:
         self.time_taken = 0
 
         # if the size of the current board search is different than
-        # previous, we need to reset the transpotition table
+        # previous, we need to reset the transposition table
         # we can also take this chance to reset the ordering table
         if self.tt_size != self.board.size:
             self.tt = {}
@@ -166,14 +178,14 @@ class OthelloPlayerAB:
         if self.use_killer and self.use_ordering:
             print("warning: if both use_killer and use_ordering are set, killer heuristic will not be used")
 
-        result = self._ab()
-
+        result = self.negamaxBoolean()
         self.time_taken = time() - self.start
+        winner, score = self.board.Winner()
 
         if self.Abort():
-            return ABORTED, -1
+            return ABORTED, -1, -1
 
-        return result, time() - self.start
+        return result, time() - self.start, score
 
     def Abort(self):
         """
@@ -225,10 +237,10 @@ class OthelloPlayerAB:
         for _key in to_remove:
             del self.tt[_key]
 
-    def _ab(self):
+    def negamaxBoolean(self):
         """
-        return if current move is win, loss, or some abritrary score (float)
-        IMPORTANT: GAME IS NOT OVER IF NO LEGAL MOVES, USE OthBoard.Terminal()
+        :param depth: the depth you want the search to go up to, an integer
+        :return: returns [x, y]. Where x is the status so far (w,l,d) and y is a score of the state value
         """
         self.searches += 1
 
@@ -248,8 +260,8 @@ class OthelloPlayerAB:
             winner, _ = self.board.Winner()
 
             if winner == EMPTY:
-                raise RuntimeError("can't handle DRAWS yet")
                 self.TTwrite(DRAW)
+                raise RuntimeError("can't handle DRAWS yet")
                 return DRAW
 
             if self.board.CurrentPlayer() == winner:
@@ -266,21 +278,17 @@ class OthelloPlayerAB:
         moves = self.board.GetLegalMoves()
 
         if self.use_ordering and not self.use_killer:
-            moves = self.OrderMoves(moves)
+            moves = self.OrderMovesNega(moves)
 
         elif self.use_killer:
             moves = self.OrderKiller(moves)
 
-        # Order the moves based on the number of captures created, the fewer the better usually
-
-        # Play the moves in order
         for m in moves:
 
             if not self.board.Play(m):
                 raise RuntimeError("illegal move played")
 
-            result = Nega(self._ab())
-
+            result = Nega(self.negamaxBoolean())
             self.board.Undo()
 
             if result == WIN:
@@ -296,7 +304,116 @@ class OthelloPlayerAB:
 
         self.TTwrite(LOSS)
         return LOSS
-            
+
+    def BestMove(self):
+        """
+        solves board's current position for the current player
+        returns following:
+        result, time_taken
+        """
+
+        # if the size of the current board search is different than
+        # previous, we need to reset the transposition table
+        # we can also take this chance to reset the ordering table
+        if self.tt_size != self.board.size:
+            self.tt = {}
+            self.tt_size = self.board.size
+            self.CreateMoveOrdering()
+            self.CreateKiller()
+
+        first_moves = self.board.GetLegalMoves()
+        solving_for = self.board.current_player
+        results = []
+
+        if len(first_moves) == 0:
+            return [self.max_reached, False, results]
+
+        max_depth = 20
+
+        if self.board.size == 5:
+            max_depth = 7
+        if self.board.size == 6:
+            max_depth = 6
+        if self.board.size == 7:
+            max_depth = 5
+        if self.board.size == 8:
+            max_depth = 5
+        if self.board.size > 8:
+            max_depth = 4
+
+        for first_move in first_moves:
+            self.first_state_values[(first_move, solving_for)] = 0
+
+        limit = self.board.size - 1
+        corners = [(0, 0), (0, limit), (limit, 0), (limit, limit)]
+        for first_move in first_moves:
+            for corner in corners:
+                if first_move == self.board.PointToStr(corner):
+                    return [self.max_reached, first_move, results]
+
+            self.board.Play(first_move)
+            results.append([self.negamaxBooleanWithDepth(0, first_move, solving_for, max_depth),
+                            first_move, self.board.current_player])
+            self.board.Undo()
+
+        legal_moves = {}
+        for move in first_moves:
+            legal_moves[move] = self.first_state_values[(move, solving_for)]
+
+        Keymax = max(legal_moves, key=legal_moves.get)
+
+        return [self.max_reached, Keymax, results]
+
+    def negamaxBooleanWithDepth(self, depth, first_move, solving_for, max_depth):
+        """
+        :param depth: the depth you want the search to go up to, an integer
+        :return:
+        """
+        self.searches += 1
+
+        # Depth limit, get a value function for all of the original actions.
+        if depth == max_depth and self.board.size > 4:
+            self.max_reached = True
+            return MAXIMUM_DEPTH
+
+        if self.board.Terminal():
+
+            self.terminals += 1
+            winner, _ = self.board.Winner()
+
+            if self.board.CurrentPlayer() == winner:
+                return WIN
+            return LOSS
+
+        # Get moves and then order them
+        moves = self.OrderMovesNegaWithListing(self.board.GetLegalMoves(), first_move, solving_for)
+
+        for move in moves:
+
+            self.board.Play(move)
+            result = Nega(self.negamaxBooleanWithDepth(depth + 1, first_move, solving_for, max_depth))
+            self.board.Undo()
+
+            if result == WIN:
+                return WIN
+        return LOSS
+
+    def OrderMovesNegaWithListing(self, moves, first_move, solving_for):
+        ordering = {}
+
+        for m in moves:
+            move_value = self.board.EvaluateMove(m)
+            ordering[m] = move_value
+
+            if self.board.current_player == solving_for:
+                self.first_state_values[(first_move, solving_for)] += -move_value
+
+            else:
+                self.first_state_values[(first_move, solving_for)] += move_value
+
+        sorted_moves = sorted(moves, key=lambda x: ordering.get(x, 0.0))
+        return sorted_moves
+
 
 def Nega(result):
     """
