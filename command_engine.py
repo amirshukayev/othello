@@ -102,23 +102,25 @@ class CommandEngine:
         # Get the first or second player:
         if int(args[0]) == 1:
             while True:
+                print(self.board)
 
                 if self.board.Terminal():
                     winner, score = self.board.Winner()
                     print("Winner is {}, with score {}".format(winner, score))
                     return False
 
-                print(self.board)
                 while True:
-                    print("Legal Moves: {}" .format(self.board.GetLegalMoves()))
-                    player_move = input("What is your move? ")
-                    # Play Move:
-                    if not self.board.Play(player_move):
-                        print("Illegal Move")
-                    else:
-                        break
 
-                print(self.board)
+                    if len(self.board.GetLegalMoves()) == 0:
+                        print("No legal moves")
+                    else:
+                        print("Legal Moves: {}" .format(self.board.GetLegalMoves()))
+                        player_move = input("What is your move? ")
+                        # Play Move:
+                        if not self.board.Play(player_move):
+                            print("Illegal Move")
+                        else:
+                            break
 
                 move = self.engine.BestMove()
 
@@ -150,13 +152,16 @@ class CommandEngine:
                 print(self.board)
 
                 while True:
-                    print("Legal Moves: {}".format(self.board.GetLegalMoves()))
-                    player_move = input("What is your move? ")
-                    # Play Move:
-                    if not self.board.Play(player_move):
-                        print("Illegal Move")
+                    if len(self.board.GetLegalMoves()) != 0:
+                        print("Legal Moves: {}".format(self.board.GetLegalMoves()))
+                        player_move = input("What is your move? ")
+                        # Play Move:
+                        if not self.board.Play(player_move):
+                            print("Illegal Move")
+                        else:
+                            break
                     else:
-                        break
+                        print("No Legal Moves")
 
                 if self.board.Terminal():
                     winner, score = self.board.Winner()

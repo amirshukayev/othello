@@ -46,7 +46,7 @@ class OthelloPlayerAB:
 
         # killer heuristic
         # TODO SET TO FALSE
-        self.use_killer = True
+        self.use_killer = False
         self._killer = {}
 
     def SetTimeLimit(self, time_limit):
@@ -337,12 +337,20 @@ class OthelloPlayerAB:
         if self.board.size == 7:
             max_depth = 5
         if self.board.size == 8:
-            max_depth = 4
+            max_depth = 5
         if self.board.size > 8:
             max_depth = 4
 
         for first_move in first_moves:
             self.first_state_values[(first_move, solving_for)] = 0
+
+        limit = self.board.size - 1
+        corners = [(0, 0), (0, limit), (limit, 0), (limit, limit)]
+        for first_move in first_moves:
+            for corner in corners:
+                if first_move == self.board.PointToStr(corner):
+                    return [self.max_reached, first_move, results]
+
             self.board.Play(first_move)
             results.append([self.negamaxBooleanWithDepth(0, first_move, solving_for, max_depth),
                             first_move, self.board.current_player])
@@ -352,10 +360,7 @@ class OthelloPlayerAB:
         for move in first_moves:
             legal_moves[move] = self.first_state_values[(move, solving_for)]
 
-        if self.board.current_player == 1:
-            Keymax = max(legal_moves, key=legal_moves.get)
-        else:
-            Keymax = max(legal_moves, key=legal_moves.get)
+        Keymax = max(legal_moves, key=legal_moves.get)
 
         return [self.max_reached, Keymax, results]
 
@@ -401,7 +406,8 @@ class OthelloPlayerAB:
             ordering[m] = move_value
 
             if self.board.current_player == solving_for:
-                self.first_state_values[(first_move, solving_for)] += move_value
+                self.first_state_values[(first_move, solving_for)] += -move_value
+
             else:
                 self.first_state_values[(first_move, solving_for)] += move_value
 

@@ -263,6 +263,8 @@ class OthBoard:
         player_count = 0
         opponent_count = 0
         move_score = 0.0
+        move_length = float(len(self.move_history))
+
         for i in range(self.size):
             for j in range(self.size):
                 if self.AccessBoard(i, j) == self.current_player:
@@ -271,14 +273,14 @@ class OthBoard:
                     opponent_count += 1
 
         # Move Score update on Mobility
-        if len(self.move_history) != 0:
-            move_score += len(legal_moves) / len(self.move_history)
+        if move_length != 0:
+            move_score += len(legal_moves) / move_length
 
         self.Undo()
 
         # Get the difference in the total discs captured.
-        captured = self.NumCaptured(move) * len(self.move_history)
-        difference = (player_count + captured * 2 + 1 - opponent_count) * len(self.move_history) * len(self.move_history)
+        captured = self.NumCaptured(move) * move_length
+        difference = (player_count + captured * 2 + 1 - opponent_count) * move_length * move_length
 
         # Start the original action value with the negative number of disc captures
         move_score += (float(captured) + difference)
@@ -292,11 +294,11 @@ class OthBoard:
         # Update both values
         for corner in corners:
             if move == corner:
-                move_score += -400.0
+                move_score += (-4000000.0 * move_length * self.size)
 
-        for acorner in adjacent_corners:
-            if move == acorner:
-                move_score += 400.0
+        #for acorner in adjacent_corners:
+        #    if move == acorner:
+        #        move_score += 400.0 * move_length
 
         return move_score
 
